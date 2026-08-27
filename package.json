@@ -1,11 +1,13 @@
 {
   "name": "abhilife",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node --test",
     "build": "vite build",
+    "verify": "npm test && npm run build",
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npm run build && npx cap sync android && npx cap open android"
