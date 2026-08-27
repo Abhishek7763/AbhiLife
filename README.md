@@ -15,7 +15,7 @@ AbhiLife is a private, offline-first personal improvement system built for one u
 - Cloud database: none by default
 - GitHub: application source code only; never personal life data
 
-## Current status — v0.3.0 Native Storage Foundation
+## Current status — v0.4.0 Data Safety & Recovery
 
 The current build includes:
 
@@ -29,13 +29,19 @@ The current build includes:
 - Android SAF native storage bridge
 - persistent AbhiLife folder connection/reconnection status
 - new-vault initialization that refuses to overwrite existing data
-- atomic-style text writes with temporary verification and recovery copy
+- native atomic-style text writes with temporary verification and rollback
+- validated last-known-good snapshots under `.recovery/`
+- full health scans for required directories and critical JSON files
+- recoverability detection for missing/corrupt critical files
+- safe restore that preserves a corrupt source copy before recovery
+- app-level safe JSON writes with read-back validation and rollback
+- Android UI actions for refreshing safety snapshots and restoring recoverable files
 - web preview that intentionally never becomes the personal-data master
 - GitHub Actions web verification
 - reproducible Android debug APK build and artifact upload
 - Vercel production deployment support
 
-The Inbox UI is still a preview: permanent Inbox writes will be enabled only after the storage foundation is locked and tested on-device.
+The Inbox UI is still a preview: permanent Inbox writes will be enabled only after the storage and recovery foundation is locked and tested on-device.
 
 ## Development
 

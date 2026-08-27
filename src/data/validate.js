@@ -41,6 +41,18 @@ export function validateManifest(value) {
   return true;
 }
 
+export function validateSettings(value) {
+  requireObject(value, 'settings');
+  requireSchemaVersion(value.schemaVersion);
+  if (value.collection !== 'settings') fail('expected collection settings.');
+  requireString(value.updatedAt, 'settings.updatedAt');
+  requireString(value.locale, 'settings.locale');
+  if (!Number.isInteger(value.weekStartsOn) || value.weekStartsOn < 0 || value.weekStartsOn > 6) {
+    fail('settings.weekStartsOn must be between 0 and 6.');
+  }
+  return true;
+}
+
 export function validateCollection(value, expectedCollection) {
   requireObject(value, `${expectedCollection} collection`);
   requireSchemaVersion(value.schemaVersion);

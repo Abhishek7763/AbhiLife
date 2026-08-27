@@ -3,7 +3,7 @@ import { APP_VERSION, LIFE_AREAS } from './core/system.js';
 import { DATA_PATHS } from './storage/paths.js';
 import { assertNoBrowserPersistence, getStorageMode } from './storage/storage.js';
 import { isNativeStorageAvailable, nativeStorageBridge } from './storage/nativeBridge.js';
-import { initializeNewVault, verifyVault } from './storage/vault.js';
+import { initializeNewVault, repairVault, snapshotVault, verifyVault } from './storage/vault.js';
 
 const storageStatus = assertNoBrowserPersistence();
 const storageMode = getStorageMode();
@@ -160,13 +160,30 @@ async function refreshStoragePanel() {
     }
 
     const health = await verifyVault(nativeStorageBridge);
+    if (health.healthy) {
+      renderStoragePanel({
+        badge: 'Protected',
+        detail: `AbhiLife vault is connected, readable, and recovery-ready in ${root.displayName}.`,
+        tone: 'good',
+        actions: [
+          { id: 'snapshot', label: 'Refresh Safety Snapshot' },
+          { id: 'disconnect', label: 'Disconnect' }
+        ]
+      });
+      return;
+    }
+
+    const canRepair = health.recoverableCount > 0;
     renderStoragePanel({
-      badge: health.healthy ? 'Connected' : 'Needs repair',
-      detail: health.healthy
-        ? `AbhiLife vault is connected and readable in ${root.displayName}.`
-        : `The folder is connected, but ${health.issues.length} data health issue(s) were detected.`,
-      tone: health.healthy ? 'good' : 'danger',
-      actions: [{ id: 'disconnect', label: 'Disconnect' }]
+      badge: canRepair ? 'Recovery available' : 'Needs repair',
+      detail: canRepair
+        ? `${health.issues.length} data health issue(s) detected; ${health.recoverableCount} can be restored from validated last-known-good copies.`
+        : `${health.issues.length} data health issue(s) detected. Automatic restore is not available for these issue(s).`,
+      tone: 'danger',
+      actions: [
+        ...(canRepair ? [{ id: 'repair', label: 'Restore Safe Copy', primary: true }] : []),
+        { id: 'disconnect', label: 'Disconnect' }
+      ]
     });
   } catch (error) {
     renderStoragePanel({
@@ -187,6 +204,14 @@ storagePanel.addEventListener('click', async (event) => {
   try {
     if (action === 'connect') await nativeStorageBridge.chooseRoot();
     if (action === 'initialize') await initializeNewVault(nativeStorageBridge);
+    if (action === 'snapshot') {
+      const result = await snapshotVault(nativeStorageBridge);
+      if (!result.ok) throw new Error(`Safety snapshot failed: ${result.errors[0].message}`);
+    }
+    if (action === 'repair') {
+      const result = await repairVault(nativeStorageBridge);
+      if (!result.ok) throw new Error(result.failed[0]?.message ?? 'Vault repair could not restore a healthy state.');
+    }
     if (action === 'disconnect') await nativeStorageBridge.releaseRoot();
   } catch (error) {
     renderStoragePanel({ badge: 'Action failed', detail: error.message, tone: 'danger' });

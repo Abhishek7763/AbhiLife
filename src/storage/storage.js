@@ -15,13 +15,13 @@ export function assertNoBrowserPersistence() {
   if (getStorageMode() === STORAGE_MODE.WEB_PREVIEW) {
     return {
       persistent: false,
-      message: 'Web preview does not persist personal data. Native AbhiLife storage will use the user-owned Documents/AbhiLife folder.'
+      message: 'Web preview does not persist personal data. Native AbhiLife storage uses the user-owned Documents/AbhiLife folder.'
     };
   }
 
   return {
     persistent: true,
-    message: 'Native storage adapter pending Phase 3 implementation.'
+    message: 'Android SAF storage is active with persistent access to the selected AbhiLife folder.'
   };
 }
 

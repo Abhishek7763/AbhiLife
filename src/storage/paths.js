@@ -42,6 +42,22 @@ export function assertSafeSegment(value, label = 'path segment') {
   return value;
 }
 
+export function assertSafeRelativePath(path, label = 'path') {
+  if (typeof path !== 'string' || !path.trim() || path.startsWith('/') || path.includes('\\')) {
+    throw new Error(`Invalid ${label}.`);
+  }
+  for (const segment of path.split('/')) assertSafeSegment(segment, label);
+  return path;
+}
+
+export function recoverySnapshotPath(path) {
+  return `${DATA_PATHS.recoveryDir}/${assertSafeRelativePath(path, 'recovery source path')}.last-good`;
+}
+
+export function recoveryCorruptPath(path) {
+  return `${DATA_PATHS.recoveryDir}/${assertSafeRelativePath(path, 'recovery source path')}.corrupt`;
+}
+
 export function recordPath(dateISO) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
     throw new Error('Daily record date must use YYYY-MM-DD.');
