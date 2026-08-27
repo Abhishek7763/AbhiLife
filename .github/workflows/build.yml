@@ -26,5 +26,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Production build
-        run: npm run build
+      - name: Data contract tests and production build
+        run: npm run verify
