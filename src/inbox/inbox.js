@@ -76,3 +76,18 @@ export async function restoreInboxThought(adapter, id) {
   await saveInboxCollection(adapter, collection);
   return thought;
 }
+
+export async function linkAcceptedThoughtToGoal(adapter, thoughtId, goalId) {
+  const collection = await loadInbox(adapter);
+  const thought = findInboxThought(collection, thoughtId);
+  if (thought.state !== 'accepted' || thought.investigation?.decision !== 'real_goal') {
+    throw new Error('Only a Real Goal candidate can be linked to a defined goal.');
+  }
+  if (thought.convertedToGoalId && thought.convertedToGoalId !== goalId) {
+    throw new Error('This thought is already linked to a different goal.');
+  }
+  thought.convertedToGoalId = goalId;
+  thought.updatedAt = nowISO();
+  await saveInboxCollection(adapter, collection);
+  return thought;
+}
