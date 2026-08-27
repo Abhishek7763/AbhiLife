@@ -1,6 +1,7 @@
 import {
   DATA_SCHEMA_VERSION,
   GOAL_STATES,
+  GOAL_PRIORITIES,
   EXECUTION_STATES,
   INBOX_THOUGHT_STATES,
   INVESTIGATION_DECISIONS,
@@ -35,6 +36,10 @@ function requireSchemaVersion(value) {
 function requireIsoDate(value, name = 'date') {
   requireString(value, name);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) fail(`${name} must use YYYY-MM-DD.`);
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    fail(`${name} is not a valid calendar date.`);
+  }
 }
 
 export function validateManifest(value) {
@@ -147,6 +152,52 @@ export function validateGoal(value) {
   if (value.areaId !== null) requireString(value.areaId, 'goal areaId');
   if (value.sourceThoughtId !== null && value.sourceThoughtId !== undefined) {
     requireString(value.sourceThoughtId, 'goal sourceThoughtId');
+  }
+  requireString(value.why ?? '', 'goal why', { allowEmpty: true });
+  requireString(value.desiredOutcome ?? '', 'goal desiredOutcome', { allowEmpty: true });
+  requireString(value.successCriteria ?? '', 'goal successCriteria', { allowEmpty: true });
+  if (value.priority !== null && !GOAL_PRIORITIES.includes(value.priority)) {
+    fail(`unknown goal priority ${String(value.priority)}.`);
+  }
+  if (value.targetDate !== null && value.targetDate !== undefined) {
+    requireIsoDate(value.targetDate, 'goal targetDate');
+  }
+  if (!Array.isArray(value.constraints)) fail('goal constraints must be an array.');
+  for (const item of value.constraints) requireString(item, 'goal constraint');
+  if (value.availableMinutesPerWeek !== null && value.availableMinutesPerWeek !== undefined) {
+    if (!Number.isInteger(value.availableMinutesPerWeek) || value.availableMinutesPerWeek <= 0) {
+      fail('goal availableMinutesPerWeek must be a positive integer.');
+    }
+  }
+  if (['defined', 'active', 'paused', 'completed'].includes(value.state)) {
+    if (!value.areaId) fail('defined goal requires an areaId.');
+    requireString(value.why, 'defined goal why');
+    requireString(value.desiredOutcome, 'defined goal desiredOutcome');
+    requireString(value.successCriteria, 'defined goal successCriteria');
+    if (!GOAL_PRIORITIES.includes(value.priority)) fail('defined goal requires a valid priority.');
+    if (!Number.isInteger(value.availableMinutesPerWeek) || value.availableMinutesPerWeek <= 0) {
+      fail('defined goal requires availableMinutesPerWeek.');
+    }
+  }
+  requireString(value.createdAt, 'goal createdAt');
+  requireString(value.updatedAt, 'goal updatedAt');
+  return true;
+}
+
+export function validateGoalsCollection(value) {
+  validateCollection(value, 'goals');
+  const ids = new Set();
+  const sourceThoughtIds = new Set();
+  for (const goal of value.items) {
+    validateGoal(goal);
+    if (ids.has(goal.id)) fail(`duplicate goal id ${goal.id}.`);
+    ids.add(goal.id);
+    if (goal.sourceThoughtId) {
+      if (sourceThoughtIds.has(goal.sourceThoughtId)) {
+        fail(`duplicate goal sourceThoughtId ${goal.sourceThoughtId}.`);
+      }
+      sourceThoughtIds.add(goal.sourceThoughtId);
+    }
   }
   return true;
 }
