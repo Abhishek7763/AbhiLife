@@ -8,25 +8,34 @@ AbhiLife is a private, offline-first personal improvement system built for one u
 - Build tool: Vite
 - Android wrapper: Capacitor
 - Primary personal data: user-owned `Documents/AbhiLife` folder on Android
+- Android folder access: Storage Access Framework (SAF) with persistable read/write permission
 - Browser persistence: intentionally not used for personal data
 - Data format: versioned, structured JSON plus original-format attachments
 - Backup: portable `.abhilife` archive (planned)
 - Cloud database: none by default
 - GitHub: application source code only; never personal life data
 
-## Current status
+## Current status — v0.3.0 Native Storage Foundation
 
-Foundation v0.1 includes:
+The current build includes:
 
 - mobile-first application shell
 - Today screen concept
 - Life Inbox preview
 - Life Departments foundation
-- versioned data schema factories
-- storage boundary that prevents web preview from becoming the master data store
-- Capacitor-ready configuration
-- Vercel-ready static build
-- GitHub Actions production-build verification
+- versioned data contract and validators
+- one-file-per-day history path contract (`records/YYYY/MM/DD.json`)
+- safe path generation and traversal protection
+- Android SAF native storage bridge
+- persistent AbhiLife folder connection/reconnection status
+- new-vault initialization that refuses to overwrite existing data
+- atomic-style text writes with temporary verification and recovery copy
+- web preview that intentionally never becomes the personal-data master
+- GitHub Actions web verification
+- reproducible Android debug APK build and artifact upload
+- Vercel production deployment support
+
+The Inbox UI is still a preview: permanent Inbox writes will be enabled only after the storage foundation is locked and tested on-device.
 
 ## Development
 
@@ -35,13 +44,13 @@ npm install
 npm run dev
 ```
 
-Production build:
+Full verification:
 
 ```bash
-npm run build
+npm run verify
 ```
 
-Android scaffolding will be added in the native-storage phase after the filesystem contract is finalized.
+The Android CI workflow generates a fresh Capacitor Android project, installs the local AbhiLife SAF plugin, compiles a debug APK, and uploads it as the `AbhiLife-debug-apk` workflow artifact.
 
 ## Data principle
 
