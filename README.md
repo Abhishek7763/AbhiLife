@@ -26,6 +26,7 @@ Foundation v0.1 includes:
 - storage boundary that prevents web preview from becoming the master data store
 - Capacitor-ready configuration
 - Vercel-ready static build
+- GitHub Actions production-build verification
 
 ## Development
 
