@@ -1,0 +1,655 @@
+:root {
+  --ink: #151515;
+  --paper: #f3efe5;
+  --paper-2: #fffdf7;
+  --paper-3: #ece7dc;
+  --pink: #ff78ad;
+  --blue: #79afff;
+  --green: #86dfa0;
+  --yellow: #ffd468;
+  --red: #ff7777;
+  --muted-ink: #655f58;
+  --line: #151515;
+  --bg: var(--paper);
+  --surface: var(--paper-2);
+  --surface-2: var(--paper-3);
+  --text: var(--ink);
+  --muted: var(--muted-ink);
+  --accent: #3f79de;
+  --good: #196f36;
+  --warn: #7e5900;
+  --danger: #a72b2b;
+  --radius: 14px;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+html.neo-app,
+html.neo-app body {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+
+html.neo-app body {
+  min-height: 100dvh;
+  background-image:
+    linear-gradient(rgba(21,21,21,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21,21,21,.035) 1px, transparent 1px) !important;
+  background-size: 28px 28px !important;
+}
+
+.neo-app * { box-sizing: border-box; }
+.neo-app button,
+.neo-app input,
+.neo-app textarea,
+.neo-app select { font: inherit; }
+.neo-app button { -webkit-tap-highlight-color: transparent; }
+
+.neo-app .app-shell {
+  min-height: 100dvh;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) 14px calc(104px + env(safe-area-inset-bottom));
+}
+
+.neo-app .app-header {
+  position: sticky;
+  top: 8px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 13px;
+  background: var(--paper-2);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.neo-app .brand { gap: 10px; }
+.neo-app .brand-mark {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--yellow);
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: .95rem;
+  font-weight: 950;
+}
+.neo-app .brand h1 {
+  font-size: 1rem;
+  font-weight: 950;
+  letter-spacing: .06em;
+  color: var(--ink);
+}
+.neo-app .brand p {
+  margin-top: 2px;
+  color: var(--muted-ink);
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .045em;
+}
+.neo-app .mode-pill {
+  border: 2px solid var(--ink) !important;
+  border-radius: 8px !important;
+  background: var(--blue) !important;
+  color: var(--ink) !important;
+  padding: 6px 8px !important;
+  font-weight: 900;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.neo-app .app-workspace { min-width: 0; }
+.neo-app .app-screen[hidden],
+.neo-app .goal-stage-card[hidden] { display: none !important; }
+.neo-app .app-screen { animation: screen-in .16s ease-out; }
+@keyframes screen-in { from { opacity: .55; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.neo-app .screen-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 3px 2px 14px;
+}
+.neo-app .screen-kicker,
+.neo-app .panel-label {
+  display: inline-block;
+  color: var(--ink);
+  font-size: .64rem;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.neo-app .screen-header h2 {
+  margin: 4px 0 3px;
+  font-size: clamp(1.55rem, 7vw, 2.2rem);
+  line-height: .98;
+  letter-spacing: -.035em;
+  color: var(--ink);
+}
+.neo-app .screen-header p {
+  margin: 0;
+  max-width: 520px;
+  color: var(--muted-ink);
+  font-size: .82rem;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.neo-app .screen-stack { display: grid; gap: 15px; }
+
+.neo-app .tactile-panel,
+.neo-app .card {
+  min-width: 0;
+  border: 2px solid var(--ink) !important;
+  border-radius: 13px !important;
+  background: var(--paper-2) !important;
+  color: var(--ink) !important;
+  padding: 14px !important;
+  box-shadow: none;
+}
+.neo-app .shadow-pink { box-shadow: 5px 5px 0 var(--pink) !important; }
+.neo-app .shadow-blue { box-shadow: 5px 5px 0 var(--blue) !important; }
+.neo-app .shadow-green { box-shadow: 5px 5px 0 var(--green) !important; }
+.neo-app .shadow-yellow { box-shadow: 5px 5px 0 var(--yellow) !important; }
+
+.neo-app .card-header {
+  align-items: center;
+  margin-bottom: 12px;
+}
+.neo-app .card h3,
+.neo-app .panel-title-row h3 {
+  margin: 3px 0 0;
+  color: var(--ink);
+  font-size: .98rem;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+.neo-app .card-subtitle {
+  margin: 3px 0 0;
+  color: var(--muted-ink);
+  font-size: .74rem;
+  font-weight: 650;
+}
+.neo-app .panel-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.neo-app .label-blue { color: #1e58bd; }
+
+.neo-app .status-stamp,
+.neo-app .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  border: 2px solid var(--ink) !important;
+  border-radius: 7px !important;
+  padding: 4px 7px !important;
+  background: var(--paper-3) !important;
+  color: var(--ink) !important;
+  font-size: .61rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.neo-app .stamp-blue { background: var(--blue) !important; }
+.neo-app .stamp-pink { background: var(--pink) !important; }
+.neo-app .stamp-green { background: var(--green) !important; }
+.neo-app .stamp-yellow { background: var(--yellow) !important; }
+
+.neo-app .action-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fff;
+}
+.neo-app .action-row + .action-row { margin-top: 8px; }
+.neo-app .action-row.featured { background: #eef4ff; }
+.neo-app .action-row > div { min-width: 0; flex: 1; }
+.neo-app .action-row strong { display: block; font-size: .84rem; line-height: 1.35; }
+.neo-app .action-row small { display: block; margin-top: 3px; color: var(--muted-ink); font-size: .7rem; line-height: 1.35; }
+.neo-app .action-dot { width: 11px; height: 11px; border: 2px solid var(--ink); border-radius: 50%; flex: 0 0 auto; }
+.neo-app .action-dot.blue { background: var(--blue); }
+.neo-app .action-box { width: 20px; height: 20px; border: 2px solid var(--ink); border-radius: 5px; flex: 0 0 auto; background: var(--paper-2); }
+.neo-app .row-arrow { font-size: 1.1rem; font-weight: 950; }
+.neo-app .section-rule { display: flex; align-items: center; gap: 8px; margin: 13px 0 7px; }
+.neo-app .section-rule::after { content: ''; height: 2px; flex: 1; background: var(--ink); }
+.neo-app .section-rule span { font-size: .62rem; font-weight: 950; letter-spacing: .1em; }
+
+.neo-app .inbox-panel { padding: 13px !important; }
+.neo-app .inbox-compose {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fff1f6;
+}
+.neo-app .inbox-compose textarea {
+  min-height: 88px;
+  border: 2px solid var(--ink) !important;
+  border-radius: 8px !important;
+  background: var(--paper-2) !important;
+  color: var(--ink) !important;
+  box-shadow: 2px 2px 0 var(--ink);
+  outline: none;
+}
+.neo-app .inbox-compose textarea:focus {
+  border-color: var(--ink) !important;
+  box-shadow: 3px 3px 0 var(--pink) !important;
+}
+.neo-app .inbox-toolbar { margin-top: 11px; }
+.neo-app .inbox-list { gap: 9px; }
+.neo-app .inbox-item {
+  border: 2px solid var(--ink) !important;
+  border-radius: 10px !important;
+  background: var(--paper-2) !important;
+  padding: 11px !important;
+  box-shadow: 3px 3px 0 var(--paper-3);
+}
+.neo-app .inbox-item-copy p { color: var(--ink); font-size: .84rem; font-weight: 750; }
+.neo-app .inbox-item-copy span { color: var(--muted-ink); font-weight: 650; }
+
+.neo-app .primary,
+.neo-app .secondary,
+.neo-app .mini-button,
+.neo-app .text-button,
+.neo-app .row-remove,
+.neo-app .gi-close,
+.neo-app .goal-def-close,
+.neo-app .breakdown-close {
+  min-height: 36px;
+  border: 2px solid var(--ink) !important;
+  border-radius: 8px !important;
+  font-weight: 900 !important;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.neo-app .primary {
+  background: var(--ink) !important;
+  color: #fff !important;
+  box-shadow: 3px 3px 0 var(--blue);
+}
+.neo-app .secondary,
+.neo-app .mini-button {
+  background: var(--paper-2) !important;
+  color: var(--ink) !important;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.neo-app .text-button {
+  background: var(--yellow) !important;
+  color: var(--ink) !important;
+  padding: 6px 8px !important;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.neo-app .danger-text,
+.neo-app .row-remove { color: #9b2020 !important; }
+.neo-app button:active { transform: translate(2px,2px); box-shadow: none !important; }
+.neo-app button:disabled { opacity: .45; transform: none; cursor: not-allowed; }
+
+.neo-app .notice,
+.neo-app .status-line,
+.neo-app .investigation-overview,
+.neo-app .goal-definition-overview,
+.neo-app .goal-breakdown-overview {
+  border: 2px solid var(--ink) !important;
+  border-radius: 8px !important;
+  background: var(--paper-3) !important;
+  color: var(--muted-ink) !important;
+  padding: 9px 10px !important;
+  font-size: .72rem !important;
+  line-height: 1.45;
+}
+.neo-app .notice.good,
+.neo-app .status-line.good,
+.neo-app .investigation-overview.good,
+.neo-app .goal-definition-overview.good,
+.neo-app .goal-breakdown-overview.good { background: #e7f8eb !important; color: #245f35 !important; }
+.neo-app .notice.danger,
+.neo-app .status-line.danger,
+.neo-app .investigation-overview.danger,
+.neo-app .goal-definition-overview.danger,
+.neo-app .goal-breakdown-overview.danger { background: #ffe8e8 !important; color: #862727 !important; }
+
+.neo-app .empty-state,
+.neo-app .gi-empty,
+.neo-app .goal-def-empty,
+.neo-app .breakdown-empty {
+  border: 2px dashed var(--ink) !important;
+  border-radius: 9px !important;
+  background: rgba(255,255,255,.45) !important;
+  color: var(--muted-ink) !important;
+}
+.neo-app .empty-state strong,
+.neo-app .gi-empty strong,
+.neo-app .goal-def-empty strong { color: var(--ink) !important; }
+
+.neo-app .segment-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin: 0 0 13px;
+  padding: 4px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--paper-2);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.neo-app .segment-tab {
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font-size: .7rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.neo-app .segment-tab.active { background: var(--blue); border: 2px solid var(--ink); }
+
+.neo-app .gi-item,
+.neo-app .goal-def-item,
+.neo-app .breakdown-item {
+  border: 2px solid var(--ink) !important;
+  border-radius: 9px !important;
+  background: var(--paper-2) !important;
+  padding: 10px !important;
+  box-shadow: 3px 3px 0 var(--paper-3);
+}
+.neo-app .gi-item-copy strong,
+.neo-app .goal-def-item strong,
+.neo-app .breakdown-item-copy strong { color: var(--ink) !important; }
+.neo-app .gi-item-copy > span,
+.neo-app .goal-def-item small,
+.neo-app .breakdown-item-copy small { color: var(--muted-ink) !important; }
+.neo-app .gi-state,
+.neo-app .goal-def-state,
+.neo-app .breakdown-state {
+  border: 1.5px solid var(--ink) !important;
+  border-radius: 5px !important;
+  color: var(--ink) !important;
+  background: var(--paper-3) !important;
+  padding: 3px 6px !important;
+  font-weight: 900 !important;
+}
+.neo-app .gi-state.investigating { background: var(--yellow) !important; }
+.neo-app .gi-state.accepted,
+.neo-app .goal-def-state.defined,
+.neo-app .breakdown-state.ready { background: var(--green) !important; }
+.neo-app .goal-def-state.ready { background: var(--blue) !important; }
+.neo-app .breakdown-state.draft { background: var(--yellow) !important; }
+
+.neo-app .gi-modal-backdrop,
+.neo-app .goal-def-backdrop,
+.neo-app .breakdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  padding: 0 !important;
+  background: var(--paper) !important;
+  backdrop-filter: none !important;
+  overflow: auto;
+}
+.neo-app .gi-sheet,
+.neo-app .goal-def-sheet,
+.neo-app .breakdown-sheet {
+  width: min(100%, 900px) !important;
+  min-height: 100dvh;
+  max-height: none !important;
+  margin: 0 auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+.neo-app .gi-sheet,
+.neo-app .goal-def-sheet { padding: max(14px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom)) !important; }
+.neo-app .gi-header,
+.neo-app .goal-def-header,
+.neo-app .breakdown-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 0 12px !important;
+  padding: 10px !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 10px !important;
+  background: var(--paper-2) !important;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+  backdrop-filter: none !important;
+}
+.neo-app .gi-header h3,
+.neo-app .goal-def-header h3,
+.neo-app .breakdown-header h3 { color: var(--ink) !important; font-weight: 950; }
+.neo-app .gi-close,
+.neo-app .goal-def-close,
+.neo-app .breakdown-close {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  background: var(--pink) !important;
+  color: var(--ink) !important;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.neo-app .gi-thought,
+.neo-app .goal-def-source,
+.neo-app .breakdown-goal {
+  margin: 0 0 12px !important;
+  padding: 10px 11px !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 9px !important;
+  background: #eef4ff !important;
+  color: var(--ink) !important;
+  box-shadow: 3px 3px 0 var(--blue);
+}
+.neo-app .breakdown-goal { margin: 0 14px 12px !important; }
+.neo-app .breakdown-goal span { color: var(--muted-ink) !important; }
+
+.neo-app .gi-progress { height: 9px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper-2); overflow: hidden; }
+.neo-app .gi-progress span { background: var(--pink); }
+.neo-app .gi-progress-copy { color: var(--muted-ink); font-weight: 900; }
+.neo-app .gi-question,
+.neo-app .gi-summary details,
+.neo-app .gi-decision-card,
+.neo-app .goal-def-note,
+.neo-app .breakdown-section,
+.neo-app .breakdown-row,
+.neo-app .breakdown-note,
+.neo-app .next-action-box {
+  border: 2px solid var(--ink) !important;
+  border-radius: 9px !important;
+  background: var(--paper-2) !important;
+  color: var(--ink) !important;
+}
+.neo-app .gi-question { box-shadow: 4px 4px 0 var(--pink); }
+.neo-app .gi-question p,
+.neo-app .gi-question small,
+.neo-app .gi-decision > p,
+.neo-app .gi-summary p,
+.neo-app .goal-def-note,
+.neo-app .breakdown-section-head p,
+.neo-app .next-action-box p,
+.neo-app .breakdown-note { color: var(--muted-ink) !important; }
+.neo-app .gi-decision-card.real { background: #eaf2ff !important; box-shadow: 3px 3px 0 var(--blue); }
+.neo-app .gi-decision-card.archive { background: #fff0f0 !important; }
+
+.neo-app .gi-question textarea,
+.neo-app .goal-def-form input,
+.neo-app .goal-def-form select,
+.neo-app .goal-def-form textarea,
+.neo-app .breakdown-field textarea,
+.neo-app .breakdown-row input,
+.neo-app .breakdown-row select,
+.neo-app .next-action-box select {
+  border: 2px solid var(--ink) !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  outline: none !important;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.neo-app .gi-question textarea:focus,
+.neo-app .goal-def-form input:focus,
+.neo-app .goal-def-form select:focus,
+.neo-app .goal-def-form textarea:focus,
+.neo-app .breakdown-field textarea:focus,
+.neo-app .breakdown-row input:focus,
+.neo-app .breakdown-row select:focus,
+.neo-app .next-action-box select:focus {
+  border-color: var(--ink) !important;
+  box-shadow: 3px 3px 0 var(--blue) !important;
+}
+.neo-app .goal-def-form label > span,
+.neo-app .breakdown-field > span,
+.neo-app .breakdown-row label > span { color: var(--ink) !important; font-weight: 850; }
+.neo-app .breakdown-body { color: var(--ink); }
+.neo-app .breakdown-section:nth-of-type(2) { box-shadow: 4px 4px 0 var(--pink); }
+.neo-app .breakdown-section:nth-of-type(3) { box-shadow: 4px 4px 0 var(--blue); }
+.neo-app .breakdown-section:nth-of-type(4) { box-shadow: 4px 4px 0 var(--yellow); }
+.neo-app .breakdown-section:nth-of-type(5) { box-shadow: 4px 4px 0 var(--green); }
+.neo-app .breakdown-row { background: #fff !important; }
+.neo-app .row-remove { background: #ffe5e5 !important; padding: 6px 8px !important; }
+.neo-app .breakdown-message,
+.neo-app .goal-def-message,
+.neo-app .gi-message { color: var(--muted-ink) !important; }
+.neo-app .breakdown-message.good,
+.neo-app .goal-def-message.good,
+.neo-app .gi-message.good { color: #225e34 !important; }
+.neo-app .breakdown-message.danger,
+.neo-app .goal-def-message.danger,
+.neo-app .gi-message.danger { color: #8f2929 !important; }
+
+.neo-app .area-list { gap: 7px; }
+.neo-app .area {
+  padding: 10px 0;
+  border-bottom: 2px solid var(--ink) !important;
+}
+.neo-app .area:last-child { border-bottom: 0 !important; }
+.neo-app .area-name { color: var(--ink); font-weight: 900; }
+.neo-app .area-state { color: var(--muted-ink); font-weight: 650; }
+.neo-app .ownership-grid { display: grid; gap: 8px; grid-template-columns: 1fr; }
+.neo-app .ownership-grid > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #fff;
+}
+.neo-app .ownership-grid strong { font-size: .67rem; letter-spacing: .07em; }
+.neo-app .ownership-grid span { font-size: .72rem; color: var(--muted-ink); text-align: right; }
+.neo-app .empty-feature { padding: 18px !important; }
+.neo-app .empty-feature h3 { margin: 7px 0 5px; font-size: 1.12rem; }
+.neo-app .empty-feature p { margin: 0; color: var(--muted-ink); font-size: .8rem; line-height: 1.5; }
+.neo-app .empty-bars { display: grid; gap: 7px; margin-top: 16px; }
+.neo-app .empty-bars span { display: block; height: 12px; border: 2px solid var(--ink); border-radius: 5px; background: var(--paper-3); }
+.neo-app .empty-bars span:nth-child(1) { width: 82%; background: var(--pink); }
+.neo-app .empty-bars span:nth-child(2) { width: 62%; background: var(--blue); }
+.neo-app .empty-bars span:nth-child(3) { width: 42%; background: var(--green); }
+
+.neo-app .app-dock {
+  position: fixed;
+  left: 50%;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 70;
+  width: min(calc(100% - 20px), 620px);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 5px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper-2);
+  box-shadow: 5px 5px 0 var(--ink);
+  backdrop-filter: none;
+}
+.neo-app .app-dock .nav-item {
+  min-height: 50px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  padding: 6px 2px;
+  font-size: .61rem;
+  font-weight: 900;
+}
+.neo-app .app-dock .nav-item.active {
+  border: 2px solid var(--ink);
+  background: var(--blue);
+  color: var(--ink);
+}
+.neo-app .app-dock .nav-icon { margin: 0 auto 2px; font-size: 1rem; font-weight: 950; line-height: 1; }
+
+@media (min-width: 700px) {
+  .neo-app .app-shell { padding-left: 24px; padding-right: 24px; }
+  .neo-app .screen-header { align-items: end; margin-bottom: 18px; }
+  .neo-app .screen-stack { gap: 18px; }
+  .neo-app .ownership-grid { grid-template-columns: repeat(3, 1fr); }
+  .neo-app .ownership-grid > div { flex-direction: column; }
+  .neo-app .ownership-grid span { text-align: left; }
+  .neo-app .gi-modal-backdrop,
+  .neo-app .goal-def-backdrop,
+  .neo-app .breakdown-backdrop { padding: 22px !important; background: rgba(243,239,229,.96) !important; }
+  .neo-app .gi-sheet,
+  .neo-app .goal-def-sheet,
+  .neo-app .breakdown-sheet {
+    min-height: auto;
+    max-height: calc(100dvh - 44px) !important;
+    overflow: auto;
+    border: 2px solid var(--ink) !important;
+    border-radius: 14px !important;
+    background: var(--paper) !important;
+    box-shadow: 7px 7px 0 var(--ink) !important;
+  }
+  .neo-app .gi-sheet,
+  .neo-app .goal-def-sheet { padding: 18px !important; }
+}
+
+@media (max-width: 520px) {
+  .neo-app .app-shell { padding-left: 10px; padding-right: 10px; }
+  .neo-app .app-header { top: 5px; margin-bottom: 15px; padding: 8px; }
+  .neo-app .brand-mark { width: 34px; height: 34px; }
+  .neo-app .brand p { max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .neo-app .mode-pill { font-size: .52rem !important; padding: 5px 6px !important; }
+  .neo-app .screen-header { margin-left: 1px; margin-right: 1px; }
+  .neo-app .screen-header h2 { font-size: 1.7rem; }
+  .neo-app .screen-header p { font-size: .75rem; }
+  .neo-app .screen-header .status-stamp { margin-top: 2px; }
+  .neo-app .tactile-panel,
+  .neo-app .card { padding: 11px !important; }
+  .neo-app .goal-def-two { grid-template-columns: 1fr !important; }
+  .neo-app .gi-item,
+  .neo-app .goal-def-item,
+  .neo-app .breakdown-item { flex-direction: column !important; align-items: stretch !important; }
+  .neo-app .gi-item .mini-button,
+  .neo-app .goal-def-item .mini-button,
+  .neo-app .breakdown-item .mini-button { width: 100%; }
+  .neo-app .breakdown-row.two,
+  .neo-app .breakdown-row.three,
+  .neo-app .breakdown-row.task-row { grid-template-columns: 1fr !important; }
+  .neo-app .breakdown-row.task-row .wide { grid-column: auto !important; }
+  .neo-app .breakdown-actions { display: grid !important; grid-template-columns: 1fr; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .neo-app,
+  .neo-app body { color-scheme: light; }
+}
