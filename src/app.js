@@ -1,6 +1,9 @@
 import './styles.css';
 import { APP_VERSION, LIFE_AREAS } from './core/system.js';
+import { DATA_PATHS } from './storage/paths.js';
 import { assertNoBrowserPersistence, getStorageMode } from './storage/storage.js';
+import { isNativeStorageAvailable, nativeStorageBridge } from './storage/nativeBridge.js';
+import { initializeNewVault, verifyVault } from './storage/vault.js';
 
 const storageStatus = assertNoBrowserPersistence();
 const storageMode = getStorageMode();
@@ -29,13 +32,26 @@ document.querySelector('#app').innerHTML = `
     </header>
 
     <section class="hero">
-      <div class="eyebrow">Foundation Build</div>
+      <div class="eyebrow">Storage Foundation</div>
       <h2>Do the next right thing.</h2>
       <p>AbhiLife is being built as a private life system: capture what matters, turn real goals into clear actions, execute today, learn from misses, and preserve the history.</p>
     </section>
 
     <section class="grid dashboard-grid">
       <div class="grid">
+        <article class="card" id="local-data-card">
+          <div class="card-header">
+            <div>
+              <h3>Local Life Data</h3>
+              <p class="card-subtitle">Your master data belongs to your AbhiLife folder, not the web.</p>
+            </div>
+            <span class="badge" id="storage-badge">Checking</span>
+          </div>
+          <div id="storage-panel" class="storage-panel">
+            <div class="status-line">${storageStatus.message}</div>
+          </div>
+        </article>
+
         <article class="card">
           <div class="card-header">
             <div>
@@ -63,7 +79,7 @@ document.querySelector('#app').innerHTML = `
             <input id="inbox-preview" placeholder="Write anything on your mind…" autocomplete="off" />
             <button class="primary" type="submit">Capture</button>
           </form>
-          <div class="notice" id="preview-notice">${storageStatus.message}</div>
+          <div class="notice" id="preview-notice">Inbox persistence is not enabled in this foundation build yet.</div>
         </article>
       </div>
 
@@ -88,13 +104,108 @@ document.querySelector('#app').innerHTML = `
   </nav>
 `;
 
+const storagePanel = document.querySelector('#storage-panel');
+const storageBadge = document.querySelector('#storage-badge');
+
+function renderStoragePanel({ badge, detail, actions = [], tone = '' }) {
+  storageBadge.textContent = badge;
+  storagePanel.innerHTML = `
+    <div class="status-line ${tone}">${detail}</div>
+    ${actions.length ? `<div class="storage-actions">${actions.map((action) => `
+      <button type="button" class="${action.primary ? 'primary' : 'secondary'}" data-storage-action="${action.id}">${action.label}</button>
+    `).join('')}</div>` : ''}
+  `;
+}
+
+async function refreshStoragePanel() {
+  if (storageMode === 'web-preview') {
+    renderStoragePanel({
+      badge: 'Web preview',
+      detail: 'Personal data is intentionally not saved in this browser preview. The Android app uses a user-owned AbhiLife folder.'
+    });
+    return;
+  }
+
+  if (!isNativeStorageAvailable()) {
+    renderStoragePanel({
+      badge: 'Unavailable',
+      detail: 'The Android storage bridge is not available in this build.',
+      tone: 'danger'
+    });
+    return;
+  }
+
+  try {
+    const root = await nativeStorageBridge.getRootStatus();
+    if (!root.connected) {
+      renderStoragePanel({
+        badge: root.needsReconnect ? 'Reconnect' : 'Not connected',
+        detail: 'Create or select a folder named AbhiLife in Android’s folder picker. AbhiLife will only receive access to that folder.',
+        actions: [{ id: 'connect', label: 'Connect AbhiLife Folder', primary: true }]
+      });
+      return;
+    }
+
+    const hasManifest = await nativeStorageBridge.exists(DATA_PATHS.manifest);
+    if (!hasManifest) {
+      renderStoragePanel({
+        badge: 'Folder connected',
+        detail: `Connected to ${root.displayName}. No AbhiLife vault exists here yet.`,
+        actions: [
+          { id: 'initialize', label: 'Create New Vault', primary: true },
+          { id: 'disconnect', label: 'Disconnect' }
+        ]
+      });
+      return;
+    }
+
+    const health = await verifyVault(nativeStorageBridge);
+    renderStoragePanel({
+      badge: health.healthy ? 'Connected' : 'Needs repair',
+      detail: health.healthy
+        ? `AbhiLife vault is connected and readable in ${root.displayName}.`
+        : `The folder is connected, but ${health.issues.length} data health issue(s) were detected.`,
+      tone: health.healthy ? 'good' : 'danger',
+      actions: [{ id: 'disconnect', label: 'Disconnect' }]
+    });
+  } catch (error) {
+    renderStoragePanel({
+      badge: 'Storage error',
+      detail: error.message,
+      tone: 'danger',
+      actions: [{ id: 'connect', label: 'Reconnect Folder', primary: true }]
+    });
+  }
+}
+
+storagePanel.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-storage-action]');
+  if (!button) return;
+  const action = button.dataset.storageAction;
+  button.disabled = true;
+
+  try {
+    if (action === 'connect') await nativeStorageBridge.chooseRoot();
+    if (action === 'initialize') await initializeNewVault(nativeStorageBridge);
+    if (action === 'disconnect') await nativeStorageBridge.releaseRoot();
+  } catch (error) {
+    renderStoragePanel({ badge: 'Action failed', detail: error.message, tone: 'danger' });
+    return;
+  }
+
+  await refreshStoragePanel();
+});
+
 document.querySelector('#inbox-preview-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const input = document.querySelector('#inbox-preview');
   const value = input.value.trim();
   if (!value) return;
 
-  document.querySelector('#preview-notice').textContent =
-    'Preview only: this thought was not saved. Persistent personal data will only be written through the Android AbhiLife folder storage engine.';
+  document.querySelector('#preview-notice').textContent = storageMode === 'web-preview'
+    ? 'Preview only: this thought was not saved. Browser persistence is intentionally disabled.'
+    : 'Storage foundation is active, but Inbox saving will be enabled in the dedicated Inbox phase.';
   input.value = '';
 });
+
+refreshStoragePanel();
