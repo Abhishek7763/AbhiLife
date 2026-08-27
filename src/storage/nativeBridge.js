@@ -3,12 +3,14 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 export const AbhiLifeStoragePlugin = registerPlugin('AbhiLifeStorage');
 
 export function isNativeStorageAvailable() {
-  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+  return Capacitor.isNativePlatform()
+    && Capacitor.getPlatform() === 'android'
+    && Capacitor.isPluginAvailable('AbhiLifeStorage');
 }
 
 function requireAndroid() {
   if (!isNativeStorageAvailable()) {
-    throw new Error('AbhiLife native storage is only available in the Android app. Web preview never persists personal data.');
+    throw new Error('AbhiLife native storage is unavailable. Web preview never persists personal data.');
   }
 }
 
@@ -35,7 +37,8 @@ export const nativeStorageBridge = Object.freeze({
 
   async exists(path) {
     requireAndroid();
-    return AbhiLifeStoragePlugin.exists({ path });
+    const result = await AbhiLifeStoragePlugin.exists({ path });
+    return Boolean(result.exists);
   },
 
   async readText(path) {
