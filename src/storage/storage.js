@@ -1,11 +1,14 @@
+import { Capacitor } from '@capacitor/core';
+
 const STORAGE_MODE = Object.freeze({
   WEB_PREVIEW: 'web-preview',
   ANDROID_NATIVE: 'android-native'
 });
 
 export function getStorageMode() {
-  const isNative = Boolean(globalThis?.Capacitor?.isNativePlatform?.());
-  return isNative ? STORAGE_MODE.ANDROID_NATIVE : STORAGE_MODE.WEB_PREVIEW;
+  return Capacitor.isNativePlatform()
+    ? STORAGE_MODE.ANDROID_NATIVE
+    : STORAGE_MODE.WEB_PREVIEW;
 }
 
 export function assertNoBrowserPersistence() {
