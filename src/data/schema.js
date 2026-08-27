@@ -114,6 +114,30 @@ export function createGoal({ title, areaId = null, sourceThoughtId = null } = {}
   };
 }
 
+export function createDefinedGoal({
+  title,
+  areaId,
+  sourceThoughtId,
+  why,
+  desiredOutcome,
+  successCriteria,
+  priority,
+  targetDate = null,
+  constraints = [],
+  availableMinutesPerWeek
+} = {}) {
+  const goal = createGoal({ title, areaId, sourceThoughtId });
+  goal.state = 'defined';
+  goal.why = String(why ?? '').trim();
+  goal.desiredOutcome = String(desiredOutcome ?? '').trim();
+  goal.successCriteria = String(successCriteria ?? '').trim();
+  goal.priority = priority ?? null;
+  goal.targetDate = targetDate || null;
+  goal.constraints = Array.isArray(constraints) ? constraints.map((item) => String(item).trim()).filter(Boolean) : [];
+  goal.availableMinutesPerWeek = availableMinutesPerWeek ?? null;
+  return goal;
+}
+
 export function createTask({ title, goalId = null, areaId = null } = {}) {
   const now = nowISO();
   return {
