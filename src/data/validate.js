@@ -1,4 +1,9 @@
-import { DATA_SCHEMA_VERSION, GOAL_STATES, EXECUTION_STATES } from '../core/system.js';
+import {
+  DATA_SCHEMA_VERSION,
+  GOAL_STATES,
+  EXECUTION_STATES,
+  INBOX_THOUGHT_STATES
+} from '../core/system.js';
 
 function fail(message) {
   throw new Error(`Invalid AbhiLife data: ${message}`);
@@ -67,7 +72,28 @@ export function validateInboxThought(value) {
   requireSchemaVersion(value.schemaVersion);
   requireString(value.id, 'inbox thought id');
   requireString(value.text, 'inbox thought text');
-  requireString(value.state, 'inbox thought state');
+  if (!INBOX_THOUGHT_STATES.includes(value.state)) {
+    fail(`unknown inbox thought state ${String(value.state)}.`);
+  }
+  requireString(value.createdAt, 'inbox thought createdAt');
+  requireString(value.updatedAt, 'inbox thought updatedAt');
+  if (value.archivedAt !== null && value.archivedAt !== undefined) {
+    requireString(value.archivedAt, 'inbox thought archivedAt');
+  }
+  if (value.convertedToGoalId !== null && value.convertedToGoalId !== undefined) {
+    requireString(value.convertedToGoalId, 'inbox thought convertedToGoalId');
+  }
+  return true;
+}
+
+export function validateInboxCollection(value) {
+  validateCollection(value, 'inbox');
+  const ids = new Set();
+  for (const thought of value.items) {
+    validateInboxThought(thought);
+    if (ids.has(thought.id)) fail(`duplicate inbox thought id ${thought.id}.`);
+    ids.add(thought.id);
+  }
   return true;
 }
 

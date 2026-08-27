@@ -1,5 +1,5 @@
 export const APP_NAME = 'AbhiLife';
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.5.0';
 export const DATA_SCHEMA_VERSION = 1;
 export const ABHILIFE_ROOT_NAME = 'AbhiLife';
 export const DATA_FORMAT = 'abhilife-data';
@@ -34,6 +34,7 @@ export const GOAL_STATES = Object.freeze([
   'dropped'
 ]);
 
+export const INBOX_THOUGHT_STATES = Object.freeze(['inbox', 'archived']);
 export const EXECUTION_STATES = Object.freeze(['done', 'partial', 'missed', 'skipped']);
 export const HABIT_STATES = Object.freeze(['active', 'paused', 'archived']);
 export const REVIEW_TYPES = Object.freeze(['weekly', 'monthly', 'yearly']);

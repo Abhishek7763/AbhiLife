@@ -1,5 +1,12 @@
 import './styles.css';
 import { APP_VERSION, LIFE_AREAS } from './core/system.js';
+import {
+  archiveInboxThought,
+  captureInboxThought,
+  editInboxThought,
+  listInboxThoughts,
+  restoreInboxThought
+} from './inbox/inbox.js';
 import { DATA_PATHS } from './storage/paths.js';
 import { assertNoBrowserPersistence, getStorageMode } from './storage/storage.js';
 import { isNativeStorageAvailable, nativeStorageBridge } from './storage/nativeBridge.js';
@@ -7,6 +14,11 @@ import { initializeNewVault, repairVault, snapshotVault, verifyVault } from './s
 
 const storageStatus = assertNoBrowserPersistence();
 const storageMode = getStorageMode();
+
+let vaultReady = false;
+let editingThoughtId = null;
+let showArchived = false;
+let visibleInboxThoughts = [];
 
 const areaRows = LIFE_AREAS.map((area) => `
   <div class="area">
@@ -32,9 +44,9 @@ document.querySelector('#app').innerHTML = `
     </header>
 
     <section class="hero">
-      <div class="eyebrow">Storage Foundation</div>
-      <h2>Do the next right thing.</h2>
-      <p>AbhiLife is being built as a private life system: capture what matters, turn real goals into clear actions, execute today, learn from misses, and preserve the history.</p>
+      <div class="eyebrow">Life Inbox</div>
+      <h2>Capture first. Decide later.</h2>
+      <p>Get thoughts out of your head without turning every idea into a goal. The Android app stores them only inside your connected AbhiLife folder.</p>
     </section>
 
     <section class="grid dashboard-grid">
@@ -55,8 +67,32 @@ document.querySelector('#app').innerHTML = `
         <article class="card">
           <div class="card-header">
             <div>
+              <h3>Life Inbox</h3>
+              <p class="card-subtitle">Raw thoughts only. Goal investigation comes later.</p>
+            </div>
+            <span class="badge" id="inbox-count-badge">Checking</span>
+          </div>
+
+          <form class="inbox-compose" id="inbox-form">
+            <textarea id="inbox-input" rows="3" placeholder="What is on your mind?" autocomplete="off"></textarea>
+            <div class="inbox-compose-actions">
+              <button class="primary" id="inbox-submit" type="submit">Capture</button>
+              <button class="secondary" id="inbox-cancel" type="button" hidden>Cancel</button>
+            </div>
+          </form>
+
+          <div class="inbox-toolbar">
+            <div class="notice compact" id="inbox-notice">Checking local vault…</div>
+            <button class="text-button" id="inbox-archive-toggle" type="button" hidden>Show archived</button>
+          </div>
+          <div class="inbox-list" id="inbox-list"></div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
               <h3>Today</h3>
-              <p class="card-subtitle">The final product will keep this screen intentionally small.</p>
+              <p class="card-subtitle">This screen stays intentionally small while the execution engine is built.</p>
             </div>
             <span class="badge">Preview</span>
           </div>
@@ -65,21 +101,6 @@ document.querySelector('#app').innerHTML = `
             <div class="task"><div class="check"></div><div><strong>Must Do</strong><span>Important actions generated from active goals.</span></div></div>
             <div class="task"><div class="check"></div><div><strong>Maintain</strong><span>Necessary routines that protect stability.</span></div></div>
           </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <h3>Life Inbox</h3>
-              <p class="card-subtitle">Capture first. Investigate later.</p>
-            </div>
-            <span class="badge">Unlimited thoughts</span>
-          </div>
-          <form class="quick-input" id="inbox-preview-form">
-            <input id="inbox-preview" placeholder="Write anything on your mind…" autocomplete="off" />
-            <button class="primary" type="submit">Capture</button>
-          </form>
-          <div class="notice" id="preview-notice">Inbox persistence is not enabled in this foundation build yet.</div>
         </article>
       </div>
 
@@ -96,8 +117,8 @@ document.querySelector('#app').innerHTML = `
   </main>
 
   <nav class="bottom-nav" aria-label="Primary">
-    <button class="nav-item active"><span class="nav-icon">⌂</span>Today</button>
-    <button class="nav-item"><span class="nav-icon">＋</span>Inbox</button>
+    <button class="nav-item"><span class="nav-icon">⌂</span>Today</button>
+    <button class="nav-item active"><span class="nav-icon">＋</span>Inbox</button>
     <button class="nav-item"><span class="nav-icon">◎</span>Goals</button>
     <button class="nav-item"><span class="nav-icon">↻</span>Habits</button>
     <button class="nav-item"><span class="nav-icon">☰</span>More</button>
@@ -106,18 +127,137 @@ document.querySelector('#app').innerHTML = `
 
 const storagePanel = document.querySelector('#storage-panel');
 const storageBadge = document.querySelector('#storage-badge');
+const inboxForm = document.querySelector('#inbox-form');
+const inboxInput = document.querySelector('#inbox-input');
+const inboxSubmit = document.querySelector('#inbox-submit');
+const inboxCancel = document.querySelector('#inbox-cancel');
+const inboxNotice = document.querySelector('#inbox-notice');
+const inboxList = document.querySelector('#inbox-list');
+const inboxCountBadge = document.querySelector('#inbox-count-badge');
+const inboxArchiveToggle = document.querySelector('#inbox-archive-toggle');
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function formatCapturedAt(value) {
+  try {
+    return new Intl.DateTimeFormat('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
 
 function renderStoragePanel({ badge, detail, actions = [], tone = '' }) {
   storageBadge.textContent = badge;
   storagePanel.innerHTML = `
-    <div class="status-line ${tone}">${detail}</div>
+    <div class="status-line ${tone}">${escapeHtml(detail)}</div>
     ${actions.length ? `<div class="storage-actions">${actions.map((action) => `
-      <button type="button" class="${action.primary ? 'primary' : 'secondary'}" data-storage-action="${action.id}">${action.label}</button>
+      <button type="button" class="${action.primary ? 'primary' : 'secondary'}" data-storage-action="${action.id}">${escapeHtml(action.label)}</button>
     `).join('')}</div>` : ''}
   `;
 }
 
+function setInboxNotice(message, tone = '') {
+  inboxNotice.textContent = message;
+  inboxNotice.className = `notice compact ${tone}`.trim();
+}
+
+function setInboxEnabled(enabled) {
+  inboxInput.disabled = !enabled;
+  inboxSubmit.disabled = !enabled;
+  if (!enabled) resetInboxEditor();
+}
+
+function resetInboxEditor() {
+  editingThoughtId = null;
+  inboxInput.value = '';
+  inboxSubmit.textContent = 'Capture';
+  inboxCancel.hidden = true;
+}
+
+function renderInboxItems(items) {
+  visibleInboxThoughts = items;
+  if (!items.length) {
+    inboxList.innerHTML = `
+      <div class="empty-state">
+        <strong>${showArchived ? 'No archived thoughts' : 'Your inbox is clear'}</strong>
+        <span>${showArchived ? 'Archived thoughts will appear here.' : 'Write anything above. You do not need to organize it yet.'}</span>
+      </div>
+    `;
+    return;
+  }
+
+  inboxList.innerHTML = items.map((thought) => `
+    <article class="inbox-item ${thought.state === 'archived' ? 'archived' : ''}">
+      <div class="inbox-item-copy">
+        <p>${escapeHtml(thought.text)}</p>
+        <span>${thought.state === 'archived' ? 'Archived' : 'Captured'} · ${escapeHtml(formatCapturedAt(thought.state === 'archived' ? thought.archivedAt : thought.createdAt))}</span>
+      </div>
+      <div class="inbox-item-actions">
+        ${thought.state === 'archived'
+          ? `<button class="mini-button" type="button" data-inbox-action="restore" data-thought-id="${thought.id}">Restore</button>`
+          : `
+            <button class="mini-button" type="button" data-inbox-action="edit" data-thought-id="${thought.id}">Edit</button>
+            <button class="mini-button danger-text" type="button" data-inbox-action="archive" data-thought-id="${thought.id}">Archive</button>
+          `}
+      </div>
+    </article>
+  `).join('');
+}
+
+async function refreshInboxPanel() {
+  if (storageMode === 'web-preview') {
+    setInboxEnabled(false);
+    inboxCountBadge.textContent = 'Native only';
+    inboxArchiveToggle.hidden = true;
+    setInboxNotice('Web preview does not save personal thoughts. Use the Android build with your connected AbhiLife folder.');
+    renderInboxItems([]);
+    return;
+  }
+
+  if (!isNativeStorageAvailable() || !vaultReady) {
+    setInboxEnabled(false);
+    inboxCountBadge.textContent = 'Locked';
+    inboxArchiveToggle.hidden = true;
+    setInboxNotice('Connect a healthy AbhiLife vault before capturing thoughts.');
+    renderInboxItems([]);
+    return;
+  }
+
+  try {
+    const allThoughts = await listInboxThoughts(nativeStorageBridge, { includeArchived: true });
+    const active = allThoughts.filter((thought) => thought.state === 'inbox');
+    const archived = allThoughts.filter((thought) => thought.state === 'archived');
+    const items = showArchived ? archived : active;
+
+    setInboxEnabled(true);
+    inboxCountBadge.textContent = showArchived ? `${archived.length} archived` : `${active.length} active`;
+    inboxArchiveToggle.hidden = archived.length === 0 && !showArchived;
+    inboxArchiveToggle.textContent = showArchived
+      ? `Show active (${active.length})`
+      : `Show archived (${archived.length})`;
+    setInboxNotice('Saved locally in your connected AbhiLife folder. Each change uses the recovery-safe write path.', 'good');
+    renderInboxItems(items);
+  } catch (error) {
+    setInboxEnabled(false);
+    inboxCountBadge.textContent = 'Read error';
+    setInboxNotice(error.message, 'danger');
+    renderInboxItems([]);
+  }
+}
+
 async function refreshStoragePanel() {
+  vaultReady = false;
+
   if (storageMode === 'web-preview') {
     renderStoragePanel({
       badge: 'Web preview',
@@ -161,6 +301,7 @@ async function refreshStoragePanel() {
 
     const health = await verifyVault(nativeStorageBridge);
     if (health.healthy) {
+      vaultReady = true;
       renderStoragePanel({
         badge: 'Protected',
         detail: `AbhiLife vault is connected, readable, and recovery-ready in ${root.displayName}.`,
@@ -195,6 +336,11 @@ async function refreshStoragePanel() {
   }
 }
 
+async function refreshAll() {
+  await refreshStoragePanel();
+  await refreshInboxPanel();
+}
+
 storagePanel.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-storage-action]');
   if (!button) return;
@@ -215,22 +361,81 @@ storagePanel.addEventListener('click', async (event) => {
     if (action === 'disconnect') await nativeStorageBridge.releaseRoot();
   } catch (error) {
     renderStoragePanel({ badge: 'Action failed', detail: error.message, tone: 'danger' });
+    button.disabled = false;
     return;
   }
 
-  await refreshStoragePanel();
+  await refreshAll();
 });
 
-document.querySelector('#inbox-preview-form').addEventListener('submit', (event) => {
+inboxForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const input = document.querySelector('#inbox-preview');
-  const value = input.value.trim();
-  if (!value) return;
 
-  document.querySelector('#preview-notice').textContent = storageMode === 'web-preview'
-    ? 'Preview only: this thought was not saved. Browser persistence is intentionally disabled.'
-    : 'Storage foundation is active, but Inbox saving will be enabled in the dedicated Inbox phase.';
-  input.value = '';
+  if (storageMode === 'web-preview') {
+    setInboxNotice('Preview only: browser persistence is intentionally disabled.');
+    return;
+  }
+  if (!vaultReady) {
+    setInboxNotice('Connect a healthy AbhiLife vault before saving.', 'danger');
+    return;
+  }
+
+  inboxSubmit.disabled = true;
+  const text = inboxInput.value;
+
+  try {
+    if (editingThoughtId) {
+      await editInboxThought(nativeStorageBridge, editingThoughtId, text);
+    } else {
+      await captureInboxThought(nativeStorageBridge, text);
+    }
+    resetInboxEditor();
+    await refreshInboxPanel();
+  } catch (error) {
+    setInboxNotice(error.message, 'danger');
+  } finally {
+    inboxSubmit.disabled = !vaultReady;
+  }
 });
 
-refreshStoragePanel();
+inboxCancel.addEventListener('click', () => {
+  resetInboxEditor();
+  inboxInput.focus();
+});
+
+inboxArchiveToggle.addEventListener('click', async () => {
+  showArchived = !showArchived;
+  resetInboxEditor();
+  await refreshInboxPanel();
+});
+
+inboxList.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-inbox-action]');
+  if (!button || !vaultReady) return;
+
+  const thought = visibleInboxThoughts.find((item) => item.id === button.dataset.thoughtId);
+  if (!thought) return;
+
+  const action = button.dataset.inboxAction;
+  if (action === 'edit') {
+    editingThoughtId = thought.id;
+    inboxInput.value = thought.text;
+    inboxSubmit.textContent = 'Save changes';
+    inboxCancel.hidden = false;
+    inboxInput.focus();
+    return;
+  }
+
+  button.disabled = true;
+  try {
+    if (action === 'archive') await archiveInboxThought(nativeStorageBridge, thought.id);
+    if (action === 'restore') await restoreInboxThought(nativeStorageBridge, thought.id);
+    resetInboxEditor();
+    await refreshInboxPanel();
+  } catch (error) {
+    setInboxNotice(error.message, 'danger');
+    button.disabled = false;
+  }
+});
+
+refreshAll();

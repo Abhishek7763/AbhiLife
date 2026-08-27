@@ -67,8 +67,10 @@ export function createInboxThought(text) {
   return {
     schemaVersion: DATA_SCHEMA_VERSION,
     id: makeId('thought'),
-    text: text.trim(),
+    text: String(text ?? '').trim(),
     state: 'inbox',
+    archivedAt: null,
+    convertedToGoalId: null,
     createdAt: now,
     updatedAt: now
   };

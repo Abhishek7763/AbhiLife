@@ -4,7 +4,12 @@ import {
   createManifest,
   createSettings
 } from '../data/schema.js';
-import { validateCollection, validateManifest, validateSettings } from '../data/validate.js';
+import {
+  validateCollection,
+  validateInboxCollection,
+  validateManifest,
+  validateSettings
+} from '../data/validate.js';
 import { DATA_PATHS, REQUIRED_DIRECTORIES } from './paths.js';
 import {
   inspectJsonFile,
@@ -18,7 +23,7 @@ const collectionValidator = (name) => (value) => validateCollection(value, name)
 export const CRITICAL_DATA_FILES = Object.freeze([
   Object.freeze({ path: DATA_PATHS.manifest, validator: validateManifest }),
   Object.freeze({ path: DATA_PATHS.settings, validator: validateSettings }),
-  Object.freeze({ path: DATA_PATHS.inbox, validator: collectionValidator('inbox') }),
+  Object.freeze({ path: DATA_PATHS.inbox, validator: validateInboxCollection }),
   Object.freeze({ path: DATA_PATHS.departments, validator: collectionValidator('departments') }),
   Object.freeze({ path: DATA_PATHS.goals, validator: collectionValidator('goals') }),
   Object.freeze({ path: DATA_PATHS.habits, validator: collectionValidator('habits') }),
@@ -29,7 +34,7 @@ function initialData() {
   return [
     [DATA_PATHS.manifest, createManifest(), validateManifest],
     [DATA_PATHS.settings, createSettings(), validateSettings],
-    [DATA_PATHS.inbox, createCollection('inbox'), collectionValidator('inbox')],
+    [DATA_PATHS.inbox, createCollection('inbox'), validateInboxCollection],
     [DATA_PATHS.departments, createDefaultDepartments(), collectionValidator('departments')],
     [DATA_PATHS.goals, createCollection('goals'), collectionValidator('goals')],
     [DATA_PATHS.habits, createCollection('habits'), collectionValidator('habits')],
