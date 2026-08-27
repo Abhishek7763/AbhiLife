@@ -1,0 +1,8 @@
+{
+  "appId": "com.abhishek.abhilife",
+  "appName": "AbhiLife",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
