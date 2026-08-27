@@ -1,5 +1,6 @@
 // Preserve goal workflow cards if they mounted inside the legacy dashboard
 // before the v0.9 app shell reorganizes the interface.
+// This module is intentionally tiny because it runs immediately before redesign.js.
 const GOAL_CARD_IDS = [
   'goal-investigation-card',
   'goal-definition-card',
