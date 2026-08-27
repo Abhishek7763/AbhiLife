@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.UriPermission;
 import android.net.Uri;
 
 import androidx.activity.result.ActivityResult;
@@ -81,8 +82,8 @@ public class AbhiLifeStoragePlugin extends Plugin {
             return;
         }
 
-        if (!root.canRead() || !root.canWrite()) {
-            call.reject("The selected AbhiLife folder must allow both reading and writing.");
+        if (!root.canRead() || !root.canWrite() || !hasPersistedPermission(uri)) {
+            call.reject("The selected AbhiLife folder must allow persistent reading and writing.");
             return;
         }
 
@@ -103,7 +104,7 @@ public class AbhiLifeStoragePlugin extends Plugin {
         try {
             Uri uri = Uri.parse(stored);
             DocumentFile root = DocumentFile.fromTreeUri(getContext(), uri);
-            if (root == null || !root.exists() || !root.canRead() || !hasPersistedPermission(uri)) {
+            if (root == null || !root.exists() || !root.canRead() || !root.canWrite() || !hasPersistedPermission(uri)) {
                 JSObject result = new JSObject();
                 result.put("connected", false);
                 result.put("needsReconnect", true);
@@ -198,7 +199,6 @@ public class AbhiLifeStoragePlugin extends Plugin {
             if (temp == null) throw new IllegalStateException("Unable to create temporary file for " + path);
             writeUtf8(temp, data);
 
-            // Verify the temporary write before touching the current file.
             if (!data.equals(readUtf8(temp))) {
                 throw new IllegalStateException("Temporary write verification failed for " + path);
             }
@@ -289,8 +289,14 @@ public class AbhiLifeStoragePlugin extends Plugin {
     }
 
     private boolean hasPersistedPermission(Uri uri) {
-        return resolver().getPersistedUriPermissions().stream()
-                .anyMatch(permission -> permission.getUri().equals(uri) && permission.isReadPermission());
+        for (UriPermission permission : resolver().getPersistedUriPermissions()) {
+            if (permission.getUri().equals(uri)
+                    && permission.isReadPermission()
+                    && permission.isWritePermission()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private DocumentFile requireRoot() {
