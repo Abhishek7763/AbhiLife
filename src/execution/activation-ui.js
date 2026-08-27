@@ -12,14 +12,36 @@ function escapeHtml(value) {
   return String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 }
 
+function ensureActivationTab() {
+  const tabs = document.querySelector('.goal-stage-tabs');
+  if (!tabs || tabs.querySelector('[data-goal-stage="activate"]')) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'segment-tab';
+  button.dataset.goalStage = 'activate';
+  button.textContent = 'Activate';
+  tabs.append(button);
+  tabs.addEventListener('click', (event) => {
+    const target = event.target.closest('[data-goal-stage="activate"]');
+    if (!target) return;
+    tabs.querySelectorAll('[data-goal-stage]').forEach((item) => item.classList.toggle('active', item === target));
+    document.querySelectorAll('.goal-stage-card').forEach((card) => {
+      card.hidden = card.dataset.goalStage !== 'activate';
+    });
+  });
+}
+
 function mount() {
   if (mounted) return true;
   const flow = document.querySelector('#goals-flow');
   if (!flow) return false;
   mounted = true;
+  ensureActivationTab();
   const card = document.createElement('article');
   card.id = 'goal-activation-card';
-  card.className = 'card tactile-panel shadow-pink';
+  card.className = 'card tactile-panel shadow-pink goal-stage-card';
+  card.dataset.goalStage = 'activate';
+  card.hidden = true;
   card.innerHTML = `
     <div class="card-header">
       <div><h3>Activate</h3><p class="card-subtitle">Start only goals whose breakdown is Ready. Activation sends the current Next Action to Today.</p></div>
