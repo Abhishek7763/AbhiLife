@@ -13,7 +13,7 @@ function normalizeThoughtText(text) {
   return value;
 }
 
-function findThought(collection, id) {
+export function findInboxThought(collection, id) {
   const thought = collection.items.find((item) => item.id === id);
   if (!thought) throw new Error('Inbox thought was not found.');
   return thought;
@@ -24,7 +24,7 @@ export async function loadInbox(adapter) {
   return parseAndValidateJson(raw, validateInboxCollection);
 }
 
-async function saveInbox(adapter, collection) {
+export async function saveInboxCollection(adapter, collection) {
   collection.updatedAt = nowISO();
   await safeWriteJson(adapter, DATA_PATHS.inbox, collection, validateInboxCollection);
   return collection;
@@ -33,7 +33,7 @@ async function saveInbox(adapter, collection) {
 export async function listInboxThoughts(adapter, { includeArchived = false } = {}) {
   const collection = await loadInbox(adapter);
   return collection.items
-    .filter((item) => includeArchived || item.state === 'inbox')
+    .filter((item) => includeArchived || item.state !== 'archived')
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
@@ -41,36 +41,38 @@ export async function captureInboxThought(adapter, text) {
   const collection = await loadInbox(adapter);
   const thought = createInboxThought(normalizeThoughtText(text));
   collection.items.unshift(thought);
-  await saveInbox(adapter, collection);
+  await saveInboxCollection(adapter, collection);
   return thought;
 }
 
 export async function editInboxThought(adapter, id, text) {
   const collection = await loadInbox(adapter);
-  const thought = findThought(collection, id);
+  const thought = findInboxThought(collection, id);
   thought.text = normalizeThoughtText(text);
   thought.updatedAt = nowISO();
-  await saveInbox(adapter, collection);
+  await saveInboxCollection(adapter, collection);
   return thought;
 }
 
 export async function archiveInboxThought(adapter, id) {
   const collection = await loadInbox(adapter);
-  const thought = findThought(collection, id);
+  const thought = findInboxThought(collection, id);
   const now = nowISO();
+  if (thought.state !== 'archived') thought.preArchiveState = thought.state;
   thought.state = 'archived';
   thought.archivedAt = now;
   thought.updatedAt = now;
-  await saveInbox(adapter, collection);
+  await saveInboxCollection(adapter, collection);
   return thought;
 }
 
 export async function restoreInboxThought(adapter, id) {
   const collection = await loadInbox(adapter);
-  const thought = findThought(collection, id);
-  thought.state = 'inbox';
+  const thought = findInboxThought(collection, id);
+  thought.state = thought.preArchiveState || 'inbox';
+  thought.preArchiveState = null;
   thought.archivedAt = null;
   thought.updatedAt = nowISO();
-  await saveInbox(adapter, collection);
+  await saveInboxCollection(adapter, collection);
   return thought;
 }

@@ -2,7 +2,8 @@ import {
   APP_VERSION,
   DATA_FORMAT,
   DATA_SCHEMA_VERSION,
-  DEFAULT_LIFE_AREAS
+  DEFAULT_LIFE_AREAS,
+  INVESTIGATION_QUESTION_KEYS
 } from '../core/system.js';
 
 function nowISO() {
@@ -27,11 +28,10 @@ export function createManifest() {
 }
 
 export function createSettings() {
-  const now = nowISO();
   return {
     schemaVersion: DATA_SCHEMA_VERSION,
     collection: 'settings',
-    updatedAt: now,
+    updatedAt: nowISO(),
     locale: 'en-IN',
     weekStartsOn: 1,
     theme: 'system',
@@ -62,6 +62,19 @@ export function createDefaultDepartments() {
   })));
 }
 
+export function createGoalInvestigation() {
+  const now = nowISO();
+  return {
+    schemaVersion: DATA_SCHEMA_VERSION,
+    status: 'draft',
+    answers: Object.fromEntries(INVESTIGATION_QUESTION_KEYS.map((key) => [key, ''])),
+    decision: null,
+    startedAt: now,
+    updatedAt: now,
+    completedAt: null
+  };
+}
+
 export function createInboxThought(text) {
   const now = nowISO();
   return {
@@ -69,6 +82,8 @@ export function createInboxThought(text) {
     id: makeId('thought'),
     text: String(text ?? '').trim(),
     state: 'inbox',
+    investigation: null,
+    preArchiveState: null,
     archivedAt: null,
     convertedToGoalId: null,
     createdAt: now,
@@ -76,13 +91,14 @@ export function createInboxThought(text) {
   };
 }
 
-export function createGoal({ title, areaId = null } = {}) {
+export function createGoal({ title, areaId = null, sourceThoughtId = null } = {}) {
   const now = nowISO();
   return {
     schemaVersion: DATA_SCHEMA_VERSION,
     id: makeId('goal'),
     title: String(title ?? '').trim(),
     areaId,
+    sourceThoughtId,
     state: 'investigating',
     why: '',
     desiredOutcome: '',

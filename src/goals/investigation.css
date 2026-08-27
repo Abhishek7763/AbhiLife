@@ -1,0 +1,50 @@
+#goal-investigation-card { overflow:hidden; }
+.investigation-overview { border:1px solid var(--line); border-radius:14px; padding:11px 12px; color:var(--muted); background:rgba(255,255,255,.025); font-size:.8rem; line-height:1.45; }
+.investigation-overview.good { color:var(--good); border-color:rgba(145,213,160,.2); background:rgba(145,213,160,.045); }
+.investigation-overview.danger { color:var(--danger); border-color:rgba(244,155,155,.22); background:rgba(244,155,155,.05); }
+.investigation-items { display:grid; gap:8px; margin-top:11px; }
+.gi-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.025); }
+.gi-item-copy { min-width:0; }
+.gi-item-copy strong { display:block; margin-top:5px; line-height:1.4; overflow-wrap:anywhere; }
+.gi-item-copy > span { display:block; color:var(--muted); font-size:.7rem; margin-top:5px; }
+.gi-state { display:inline-flex; padding:3px 7px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-size:.64rem; font-weight:800; }
+.gi-state.investigating { color:var(--warn); border-color:rgba(243,204,119,.24); }
+.gi-state.accepted { color:var(--good); border-color:rgba(145,213,160,.24); }
+.gi-empty { border:1px dashed var(--line); border-radius:14px; padding:16px; text-align:center; color:var(--muted); }
+.gi-empty strong { display:block; color:var(--text); font-size:.86rem; }
+.gi-empty span { display:block; margin-top:4px; font-size:.75rem; }
+.gi-modal-backdrop { position:fixed; inset:0; z-index:80; display:flex; align-items:flex-end; justify-content:center; padding:12px; background:rgba(3,6,12,.75); backdrop-filter:blur(9px); }
+.gi-modal-backdrop[hidden] { display:none; }
+.gi-sheet { width:min(100%,720px); max-height:min(92vh,860px); overflow:auto; padding:18px; border:1px solid var(--line); border-radius:24px 24px 18px 18px; background:var(--surface); box-shadow:0 30px 90px rgba(0,0,0,.5); }
+.gi-header { position:sticky; top:-18px; z-index:2; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:-18px -18px 0; padding:18px; background:linear-gradient(to bottom,var(--surface) 75%,rgba(19,23,33,0)); }
+.gi-header h3 { margin:5px 0 0; font-size:1.05rem; }
+.gi-close { width:38px; height:38px; display:grid; place-items:center; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.035); color:var(--text); font-size:1.3rem; }
+.gi-thought { margin:8px 0 15px; padding:12px 13px; border-left:3px solid var(--accent); border-radius:0 12px 12px 0; background:rgba(143,184,255,.06); font-weight:750; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
+.gi-progress-copy { color:var(--muted); font-size:.74rem; font-weight:750; }
+.gi-progress { height:7px; margin:8px 0 13px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.07); }
+.gi-progress span { display:block; height:100%; border-radius:inherit; background:var(--accent); }
+.gi-question { padding:15px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.025); }
+.gi-question h4, .gi-decision h4 { margin:0; font-size:1.05rem; }
+.gi-question p, .gi-decision > p { margin:8px 0 6px; line-height:1.52; }
+.gi-question small { display:block; color:var(--muted); line-height:1.4; margin-bottom:12px; }
+.gi-question textarea { width:100%; min-height:150px; resize:vertical; border:1px solid var(--line); border-radius:13px; padding:12px; color:var(--text); background:#0d1119; outline:none; line-height:1.5; }
+.gi-question textarea:focus { border-color:rgba(143,184,255,.65); box-shadow:0 0 0 3px rgba(143,184,255,.07); }
+.gi-actions { display:flex; justify-content:space-between; gap:9px; margin-top:12px; }
+.gi-message { margin-top:11px; border:1px solid var(--line); border-radius:13px; padding:10px 11px; color:var(--muted); background:rgba(255,255,255,.02); font-size:.76rem; line-height:1.45; }
+.gi-message.good { color:var(--good); border-color:rgba(145,213,160,.22); }
+.gi-message.danger { color:var(--danger); border-color:rgba(244,155,155,.22); }
+.gi-summary { display:grid; gap:6px; margin:13px 0; }
+.gi-summary details { padding:9px 11px; border:1px solid var(--line); border-radius:11px; background:rgba(255,255,255,.02); }
+.gi-summary summary { cursor:pointer; font-size:.78rem; font-weight:800; }
+.gi-summary p { margin:7px 0 1px; color:var(--muted); font-size:.78rem; line-height:1.5; white-space:pre-wrap; }
+.gi-decision-grid { display:grid; grid-template-columns:1fr; gap:8px; margin:13px 0; }
+.gi-decision-card { text-align:left; padding:12px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.025); color:var(--text); }
+.gi-decision-card strong { display:block; }
+.gi-decision-card span { display:block; margin-top:4px; color:var(--muted); font-size:.74rem; line-height:1.4; }
+.gi-decision-card.real { border-color:rgba(143,184,255,.32); background:rgba(143,184,255,.07); }
+.gi-decision-card.archive { border-color:rgba(244,155,155,.22); }
+.gi-full { width:100%; }
+@media (max-width:520px) { .gi-item { align-items:flex-start; flex-direction:column; } .gi-modal-backdrop { padding:0; } .gi-sheet { max-height:95vh; border-radius:24px 24px 0 0; padding-bottom:max(20px,env(safe-area-inset-bottom)); } }
+@media (min-width:620px) { .gi-decision-grid { grid-template-columns:1fr 1fr; } }
+@media (min-width:760px) { .gi-modal-backdrop { align-items:center; } .gi-sheet { border-radius:24px; } }
+@media (prefers-color-scheme:light) { .gi-question textarea { background:#fff; } .gi-header { background:linear-gradient(to bottom,#fff 75%,rgba(255,255,255,0)); } }

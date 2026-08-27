@@ -2,7 +2,10 @@ import {
   DATA_SCHEMA_VERSION,
   GOAL_STATES,
   EXECUTION_STATES,
-  INBOX_THOUGHT_STATES
+  INBOX_THOUGHT_STATES,
+  INVESTIGATION_DECISIONS,
+  INVESTIGATION_QUESTION_KEYS,
+  INVESTIGATION_STATUSES
 } from '../core/system.js';
 
 function fail(message) {
@@ -67,6 +70,29 @@ export function validateCollection(value, expectedCollection) {
   return true;
 }
 
+export function validateGoalInvestigation(value) {
+  requireObject(value, 'goal investigation');
+  requireSchemaVersion(value.schemaVersion);
+  if (!INVESTIGATION_STATUSES.includes(value.status)) {
+    fail(`unknown investigation status ${String(value.status)}.`);
+  }
+  requireObject(value.answers, 'goal investigation answers');
+  for (const key of INVESTIGATION_QUESTION_KEYS) {
+    requireString(value.answers[key], `goal investigation answer ${key}`, { allowEmpty: true });
+  }
+  for (const key of Object.keys(value.answers)) {
+    if (!INVESTIGATION_QUESTION_KEYS.includes(key)) fail(`unknown investigation answer key ${key}.`);
+  }
+  if (value.decision !== null && !INVESTIGATION_DECISIONS.includes(value.decision)) {
+    fail(`unknown investigation decision ${String(value.decision)}.`);
+  }
+  requireString(value.startedAt, 'goal investigation startedAt');
+  requireString(value.updatedAt, 'goal investigation updatedAt');
+  if (value.completedAt !== null) requireString(value.completedAt, 'goal investigation completedAt');
+  if (value.status === 'completed' && !value.decision) fail('completed investigation requires a decision.');
+  return true;
+}
+
 export function validateInboxThought(value) {
   requireObject(value, 'inbox thought');
   requireSchemaVersion(value.schemaVersion);
@@ -75,6 +101,15 @@ export function validateInboxThought(value) {
   if (!INBOX_THOUGHT_STATES.includes(value.state)) {
     fail(`unknown inbox thought state ${String(value.state)}.`);
   }
+  if (value.investigation !== null && value.investigation !== undefined) {
+    validateGoalInvestigation(value.investigation);
+  }
+  if (value.preArchiveState !== null && value.preArchiveState !== undefined) {
+    requireString(value.preArchiveState, 'inbox thought preArchiveState');
+    if (!INBOX_THOUGHT_STATES.includes(value.preArchiveState) || value.preArchiveState === 'archived') {
+      fail(`invalid inbox thought preArchiveState ${String(value.preArchiveState)}.`);
+    }
+  }
   requireString(value.createdAt, 'inbox thought createdAt');
   requireString(value.updatedAt, 'inbox thought updatedAt');
   if (value.archivedAt !== null && value.archivedAt !== undefined) {
@@ -82,6 +117,12 @@ export function validateInboxThought(value) {
   }
   if (value.convertedToGoalId !== null && value.convertedToGoalId !== undefined) {
     requireString(value.convertedToGoalId, 'inbox thought convertedToGoalId');
+  }
+  if (value.state === 'accepted' && value.investigation?.decision !== 'real_goal') {
+    fail('accepted thought requires a completed real_goal investigation decision.');
+  }
+  if (value.state === 'someday' && value.investigation?.decision !== 'someday') {
+    fail('someday thought requires a completed someday investigation decision.');
   }
   return true;
 }
@@ -104,6 +145,9 @@ export function validateGoal(value) {
   requireString(value.title, 'goal title');
   if (!GOAL_STATES.includes(value.state)) fail(`unknown goal state ${String(value.state)}.`);
   if (value.areaId !== null) requireString(value.areaId, 'goal areaId');
+  if (value.sourceThoughtId !== null && value.sourceThoughtId !== undefined) {
+    requireString(value.sourceThoughtId, 'goal sourceThoughtId');
+  }
   return true;
 }
 
