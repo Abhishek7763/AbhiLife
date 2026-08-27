@@ -5,7 +5,8 @@ const SCREEN_ORDER = ['today', 'inbox', 'goals', 'habits', 'more'];
 const GOAL_STAGES = {
   investigate: 'goal-investigation-card',
   define: 'goal-definition-card',
-  plan: 'goal-breakdown-card'
+  plan: 'goal-breakdown-card',
+  activate: 'goal-activation-card'
 };
 
 let currentScreen = 'today';
@@ -77,13 +78,14 @@ function buildScreens(shell) {
     <section class="app-screen" id="screen-goals" data-screen="goals" hidden>
       ${screenHeader({
         eyebrow: 'Goal System',
-        title: 'Think → Define → Plan',
+        title: 'Think → Define → Plan → Activate',
         copy: 'Turn only meaningful thoughts into executable action chains.'
       })}
       <div class="segment-tabs goal-stage-tabs" role="tablist" aria-label="Goal workflow">
         <button type="button" class="segment-tab active" data-goal-stage="investigate">Investigate</button>
         <button type="button" class="segment-tab" data-goal-stage="define">Define</button>
         <button type="button" class="segment-tab" data-goal-stage="plan">Plan</button>
+        <button type="button" class="segment-tab" data-goal-stage="activate">Activate</button>
       </div>
       <div class="screen-stack" id="goals-flow"></div>
     </section>
@@ -220,7 +222,7 @@ function configureNavigation() {
 function decorateGoalCard(card, stage) {
   card.classList.add('tactile-panel', 'goal-stage-card');
   card.dataset.goalStage = stage;
-  card.classList.toggle('shadow-pink', stage === 'investigate');
+  card.classList.toggle('shadow-pink', stage === 'investigate' || stage === 'activate');
   card.classList.toggle('shadow-blue', stage === 'define');
   card.classList.toggle('shadow-green', stage === 'plan');
 }
