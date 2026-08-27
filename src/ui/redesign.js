@@ -1,7 +1,7 @@
 import './redesign.css';
 import { APP_VERSION } from '../core/system.js';
 
-const SCREEN_ORDER = ['today', 'inbox', 'goals', 'habits', 'more'];
+const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more'];
 const GOAL_STAGES = {
   investigate: 'goal-investigation-card',
   define: 'goal-definition-card',
@@ -18,7 +18,7 @@ function byHeading(text) {
   return [...document.querySelectorAll('.card')].find((card) => card.querySelector('h3')?.textContent.trim() === text) ?? null;
 }
 
-function todayLabel() {
+function localDayLabel() {
   try {
     return new Intl.DateTimeFormat('en-IN', {
       weekday: 'long',
@@ -30,16 +30,32 @@ function todayLabel() {
   }
 }
 
-function screenHeader({ eyebrow, title, copy, action = '' }) {
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function screenHeader({ eyebrow, title, copy }) {
   return `
     <header class="screen-header">
-      <div>
-        <span class="screen-kicker">${eyebrow}</span>
-        <h2>${title}</h2>
-        ${copy ? `<p>${copy}</p>` : ''}
-      </div>
-      ${action}
+      <span class="screen-kicker">${eyebrow}</span>
+      <h2>${title}</h2>
+      ${copy ? `<p>${copy}</p>` : ''}
     </header>
+  `;
+}
+
+function buildMoreMenu() {
+  return `
+    <section class="calm-menu" aria-label="More tools">
+      <div class="calm-menu-row"><div><strong>Habits</strong><span>Cue, context and repetition</span></div><span class="menu-state">Later</span></div>
+      <div class="calm-menu-row"><div><strong>Maintenance</strong><span>Protect everyday stability</span></div><span class="menu-state">Later</span></div>
+      <div class="calm-menu-row"><div><strong>Reviews</strong><span>Weekly and monthly reflection</span></div><span class="menu-state">Later</span></div>
+      <div class="calm-menu-row"><div><strong>History</strong><span>Your 365-day evidence timeline</span></div><span class="menu-state">Later</span></div>
+      <div class="calm-menu-row"><div><strong>Notes</strong><span>Ideas, lessons and reflections</span></div><span class="menu-state">Later</span></div>
+    </section>
   `;
 }
 
@@ -57,10 +73,9 @@ function buildScreens(shell) {
   workspace.innerHTML = `
     <section class="app-screen" id="screen-today" data-screen="today">
       ${screenHeader({
-        eyebrow: 'Daily Command Center',
+        eyebrow: greeting(),
         title: 'Today',
-        copy: todayLabel(),
-        action: '<span class="status-stamp stamp-blue">FOCUS</span>'
+        copy: localDayLabel()
       })}
       <div class="screen-stack" id="today-screen-content"></div>
     </section>
@@ -69,49 +84,35 @@ function buildScreens(shell) {
       ${screenHeader({
         eyebrow: 'Life Inbox',
         title: 'Capture first.',
-        copy: 'A thought is not a goal. Save it now; decide later.',
-        action: '<span class="status-stamp stamp-pink">INBOX</span>'
+        copy: 'Write it down without deciding what it means yet.'
       })}
       <div class="screen-stack" id="inbox-screen-content"></div>
     </section>
 
     <section class="app-screen" id="screen-goals" data-screen="goals" hidden>
       ${screenHeader({
-        eyebrow: 'Goal System',
-        title: 'Think → Define → Plan → Activate',
-        copy: 'Turn only meaningful thoughts into executable action chains.'
+        eyebrow: 'Goals',
+        title: 'Think clearly. Act deliberately.',
+        copy: 'Investigate, define, plan and activate only what matters.'
       })}
       <div class="segment-tabs goal-stage-tabs" role="tablist" aria-label="Goal workflow">
         <button type="button" class="segment-tab active" data-goal-stage="investigate">Investigate</button>
         <button type="button" class="segment-tab" data-goal-stage="define">Define</button>
         <button type="button" class="segment-tab" data-goal-stage="plan">Plan</button>
-        <button type="button" class="segment-tab" data-goal-stage="activate">Activate</button>
+        <button type="button" class="segment-tab" data-goal-stage="activate">Active</button>
       </div>
       <div class="screen-stack" id="goals-flow"></div>
-    </section>
-
-    <section class="app-screen" id="screen-habits" data-screen="habits" hidden>
-      ${screenHeader({
-        eyebrow: 'Behaviour',
-        title: 'Habits',
-        copy: 'Cue, context and repetition will live here — not fake motivation scores.',
-        action: '<span class="status-stamp stamp-green">NEXT</span>'
-      })}
-      <article class="tactile-panel shadow-green empty-feature">
-        <span class="panel-label">HABIT ENGINE</span>
-        <h3>Coming after daily execution</h3>
-        <p>The habit engine will use the same offline AbhiLife data vault. This redesign does not invent placeholder habit data.</p>
-        <div class="empty-bars"><span></span><span></span><span></span></div>
-      </article>
     </section>
 
     <section class="app-screen" id="screen-more" data-screen="more" hidden>
       ${screenHeader({
         eyebrow: 'System',
         title: 'More',
-        copy: 'Life departments, local data safety and system controls.'
+        copy: 'Long-term tools and your local data controls.'
       })}
-      <div class="screen-stack" id="more-screen-content"></div>
+      <div class="screen-stack" id="more-screen-content">
+        ${buildMoreMenu()}
+      </div>
     </section>
   `;
 
@@ -119,48 +120,49 @@ function buildScreens(shell) {
   else shell.prepend(workspace);
 
   if (todayCard) {
-    todayCard.classList.add('tactile-panel', 'shadow-blue', 'today-panel');
+    todayCard.classList.add('calm-section', 'today-panel');
     document.querySelector('#today-screen-content').append(todayCard);
     todayCard.innerHTML = `
       <div class="panel-title-row">
-        <div><span class="panel-label label-blue">MOST IMPORTANT WIN</span><h3>Protect one meaningful win.</h3></div>
-        <span class="status-stamp stamp-blue">PREVIEW</span>
+        <div>
+          <span class="panel-label">MOST IMPORTANT</span>
+          <h3>Your next meaningful action will appear here.</h3>
+        </div>
       </div>
-      <div class="action-row featured"><span class="action-dot blue"></span><div><strong>Your first Next Action will appear here.</strong><small>Generated from an Active goal after the activation phase.</small></div><span class="row-arrow">→</span></div>
-      <div class="section-rule"><span>MUST DO</span></div>
-      <div class="action-row"><span class="action-box"></span><div><strong>Important actions</strong><small>Only a realistic small set will be shown.</small></div></div>
-      <div class="section-rule"><span>MAINTAIN</span></div>
-      <div class="action-row"><span class="action-box"></span><div><strong>Stability routines</strong><small>Maintenance is protected without artificial points.</small></div></div>
+      <div class="quiet-placeholder">Activate a Ready goal to begin your daily execution loop.</div>
     `;
   }
 
   if (inboxCard) {
-    inboxCard.classList.add('tactile-panel', 'shadow-pink', 'inbox-panel');
+    inboxCard.classList.add('calm-section', 'inbox-panel');
     document.querySelector('#inbox-screen-content').append(inboxCard);
     const heading = inboxCard.querySelector('.card-header h3');
     const subtitle = inboxCard.querySelector('.card-subtitle');
-    if (heading) heading.textContent = 'New Thought';
-    if (subtitle) subtitle.textContent = 'Write it down without organizing or judging it.';
-  }
-
-  if (storageCard) {
-    storageCard.classList.add('tactile-panel', 'shadow-green', 'system-panel');
-    document.querySelector('#more-screen-content').append(storageCard);
+    if (heading) heading.textContent = 'New thought';
+    if (subtitle) subtitle.textContent = 'No labels, no pressure. Capture it first.';
   }
 
   if (departmentsCard) {
-    departmentsCard.classList.add('tactile-panel', 'shadow-yellow', 'departments-panel');
+    departmentsCard.classList.add('calm-section', 'departments-panel');
     document.querySelector('#more-screen-content').append(departmentsCard);
   }
 
-  const ownership = document.createElement('article');
-  ownership.className = 'tactile-panel shadow-pink ownership-panel';
+  if (storageCard) {
+    storageCard.classList.add('calm-section', 'system-panel');
+    document.querySelector('#more-screen-content').append(storageCard);
+  }
+
+  const ownership = document.createElement('section');
+  ownership.className = 'calm-section ownership-panel';
   ownership.innerHTML = `
-    <div class="panel-title-row"><div><span class="panel-label">DATA OWNERSHIP</span><h3>Your life data stays yours.</h3></div><span class="status-stamp stamp-green">OFFLINE</span></div>
+    <div class="panel-title-row">
+      <div><span class="panel-label">DATA OWNERSHIP</span><h3>Your life data stays yours.</h3></div>
+      <span class="status-stamp stamp-green">Offline</span>
+    </div>
     <div class="ownership-grid">
-      <div><strong>APP CODE</strong><span>GitHub + Vercel</span></div>
-      <div><strong>PERSONAL DATA</strong><span>Documents / AbhiLife</span></div>
-      <div><strong>VERSION</strong><span>v${APP_VERSION}</span></div>
+      <div><strong>Personal data</strong><span>Documents / AbhiLife</span></div>
+      <div><strong>App code</strong><span>GitHub + Vercel</span></div>
+      <div><strong>Version</strong><span>v${APP_VERSION}</span></div>
     </div>
   `;
   document.querySelector('#more-screen-content').append(ownership);
@@ -173,14 +175,12 @@ function configureTopbar(shell) {
   const topbar = shell.querySelector('.topbar');
   if (!topbar) return;
   topbar.classList.add('app-header');
-  const brandMark = topbar.querySelector('.brand-mark');
+  topbar.querySelector('.brand-mark')?.remove();
   const title = topbar.querySelector('.brand h1');
   const subtitle = topbar.querySelector('.brand p');
-  if (brandMark) brandMark.textContent = 'A';
-  if (title) title.textContent = 'ABHILIFE';
-  if (subtitle) subtitle.textContent = `PERSONAL LIFE SYSTEM · v${APP_VERSION}`;
-  const mode = topbar.querySelector('.mode-pill');
-  mode?.classList.add('status-stamp');
+  if (title) title.textContent = 'AbhiLife';
+  if (subtitle) subtitle.textContent = `Personal life system · v${APP_VERSION}`;
+  topbar.querySelector('.mode-pill')?.classList.add('status-stamp');
 }
 
 function showScreen(name) {
@@ -201,30 +201,29 @@ function showScreen(name) {
 function configureNavigation() {
   const nav = document.querySelector('.bottom-nav');
   if (!nav) return;
-  const labels = [
-    ['today', '⌂', 'Today'],
-    ['inbox', '+', 'Inbox'],
-    ['goals', '◎', 'Goals'],
-    ['habits', '↻', 'Habits'],
-    ['more', '≡', 'More']
-  ];
-  [...nav.querySelectorAll('.nav-item')].forEach((button, index) => {
-    const item = labels[index];
-    if (!item) return;
-    button.dataset.screen = item[0];
-    button.innerHTML = `<span class="nav-icon">${item[1]}</span><span>${item[2]}</span>`;
-    button.addEventListener('click', () => showScreen(item[0]));
-  });
   nav.classList.add('app-dock');
+  nav.innerHTML = [
+    ['today', 'Today'],
+    ['inbox', 'Inbox'],
+    ['goals', 'Goals'],
+    ['more', 'More']
+  ].map(([screen, label]) => `
+    <button class="nav-item" type="button" data-screen="${screen}">
+      <span class="nav-dot" aria-hidden="true"></span>
+      <span>${label}</span>
+    </button>
+  `).join('');
+
+  nav.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-screen]');
+    if (button) showScreen(button.dataset.screen);
+  });
   showScreen(currentScreen);
 }
 
 function decorateGoalCard(card, stage) {
-  card.classList.add('tactile-panel', 'goal-stage-card');
+  card.classList.add('calm-section', 'goal-stage-card');
   card.dataset.goalStage = stage;
-  card.classList.toggle('shadow-pink', stage === 'investigate' || stage === 'activate');
-  card.classList.toggle('shadow-blue', stage === 'define');
-  card.classList.toggle('shadow-green', stage === 'plan');
 }
 
 function relocateGoalCards() {
@@ -243,24 +242,19 @@ function showGoalStage(stage) {
   if (!Object.hasOwn(GOAL_STAGES, stage)) return;
   currentGoalStage = stage;
   document.querySelectorAll('.goal-stage-tabs [data-goal-stage]').forEach((button) => {
-    button.classList.toggle('active', button.dataset.goalStage === stage);
+    const active = button.dataset.goalStage === stage;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
   });
   document.querySelectorAll('.goal-stage-card').forEach((card) => {
     card.hidden = card.dataset.goalStage !== stage;
   });
-  const flow = document.querySelector('#goals-flow');
-  if (flow && !flow.querySelector(`.goal-stage-card[data-goal-stage="${stage}"]`)) {
-    flow.dataset.waitingStage = stage;
-  } else if (flow) {
-    delete flow.dataset.waitingStage;
-  }
 }
 
 function configureGoalTabs() {
   document.querySelector('.goal-stage-tabs')?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-goal-stage]');
-    if (!button) return;
-    showGoalStage(button.dataset.goalStage);
+    if (button) showGoalStage(button.dataset.goalStage);
   });
 }
 
@@ -271,8 +265,8 @@ function observeGoalWorkflow() {
   relocateGoalCards();
 }
 
-function enhanceCards() {
-  document.querySelectorAll('.card').forEach((card) => card.classList.add('tactile-panel'));
+function enhanceLegacyUi() {
+  document.querySelectorAll('.card').forEach((card) => card.classList.add('calm-section'));
   document.querySelectorAll('.badge').forEach((badge) => badge.classList.add('status-stamp'));
 }
 
@@ -284,12 +278,13 @@ function mount() {
     return;
   }
   mounted = true;
-  document.documentElement.classList.add('neo-app');
+  document.documentElement.classList.remove('neo-app');
+  document.documentElement.classList.add('calm-app');
   configureTopbar(shell);
   buildScreens(shell);
   configureNavigation();
   configureGoalTabs();
-  enhanceCards();
+  enhanceLegacyUi();
   observeGoalWorkflow();
 }
 
