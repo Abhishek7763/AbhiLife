@@ -3,7 +3,7 @@ import { createCollection, createDailyRecord } from '../data/schema.js';
 import { parseAndValidateJson, validateCollection } from '../data/validate.js';
 import { validateTodayRecord } from '../execution/today.js';
 import { recordPath } from '../storage/paths.js';
-import { safeWriteJson } from '../storage/recovery.js';
+import { safeWriteJson, snapshotLastKnownGood } from '../storage/recovery.js';
 
 export const BAD_HABITS_PATH = 'habits/bad-items.json';
 export const BAD_HABIT_EVENT_TYPES = Object.freeze(['occurred', 'interrupted', 'replaced']);
@@ -114,7 +114,10 @@ export async function loadBadHabits(adapter) {
 
 async function saveBadHabits(adapter, collection) {
   collection.updatedAt = nowISO();
-  await safeWriteJson(adapter, BAD_HABITS_PATH, collection, validateBadHabitsCollection);
+  const result = await safeWriteJson(adapter, BAD_HABITS_PATH, collection, validateBadHabitsCollection);
+  if (!result.snapshotCreated) {
+    await snapshotLastKnownGood(adapter, BAD_HABITS_PATH, validateBadHabitsCollection);
+  }
   return collection;
 }
 
