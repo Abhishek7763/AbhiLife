@@ -10,6 +10,7 @@ import {
   validateManifest,
   validateSettings
 } from '../data/validate.js';
+import { BAD_HABITS_PATH, validateBadHabitsCollection } from '../bad-habits/bad-habits.js';
 import { DATA_PATHS, REQUIRED_DIRECTORIES } from './paths.js';
 import {
   inspectJsonFile,
@@ -30,6 +31,10 @@ export const CRITICAL_DATA_FILES = Object.freeze([
   Object.freeze({ path: DATA_PATHS.maintenance, validator: collectionValidator('maintenance') })
 ]);
 
+export const OPTIONAL_DATA_FILES = Object.freeze([
+  Object.freeze({ path: BAD_HABITS_PATH, validator: validateBadHabitsCollection })
+]);
+
 function initialData() {
   return [
     [DATA_PATHS.manifest, createManifest(), validateManifest],
@@ -42,19 +47,30 @@ function initialData() {
   ];
 }
 
+async function snapshotDescriptor(adapter, descriptor, snapshots, skipped, errors, { optional = false } = {}) {
+  try {
+    if (optional && !await adapter.exists(descriptor.path)) {
+      skipped.push({ created: false, path: descriptor.path, reason: 'optional-missing' });
+      return;
+    }
+    const result = await snapshotLastKnownGood(adapter, descriptor.path, descriptor.validator);
+    if (result.created) snapshots.push(result);
+    else skipped.push(result);
+  } catch (error) {
+    errors.push({ path: descriptor.path, message: error.message });
+  }
+}
+
 export async function snapshotVault(adapter) {
   const snapshots = [];
   const skipped = [];
   const errors = [];
 
   for (const descriptor of CRITICAL_DATA_FILES) {
-    try {
-      const result = await snapshotLastKnownGood(adapter, descriptor.path, descriptor.validator);
-      if (result.created) snapshots.push(result);
-      else skipped.push(result);
-    } catch (error) {
-      errors.push({ path: descriptor.path, message: error.message });
-    }
+    await snapshotDescriptor(adapter, descriptor, snapshots, skipped, errors);
+  }
+  for (const descriptor of OPTIONAL_DATA_FILES) {
+    await snapshotDescriptor(adapter, descriptor, snapshots, skipped, errors, { optional: true });
   }
 
   return { ok: errors.length === 0, snapshots, skipped, errors };
@@ -86,6 +102,25 @@ export async function initializeNewVault(adapter) {
   return files[0][1];
 }
 
+function addInspectionIssue(issues, warnings, descriptor, inspection, { optional = false } = {}) {
+  if (!inspection.main.valid) {
+    if (optional && !inspection.main.exists) return;
+    issues.push({
+      path: descriptor.path,
+      type: inspection.main.exists ? 'invalid-file' : 'missing-file',
+      message: inspection.main.error ?? `${optional ? 'Optional' : 'Required'} file is missing: ${descriptor.path}`,
+      recoverable: inspection.recoverable,
+      recoveryPath: inspection.recoverable ? inspection.recovery.path : null
+    });
+  } else if (inspection.recovery.exists && !inspection.recovery.valid) {
+    warnings.push({
+      path: inspection.recovery.path,
+      type: 'invalid-recovery-snapshot',
+      message: inspection.recovery.error
+    });
+  }
+}
+
 export async function verifyVault(adapter) {
   const issues = [];
   const warnings = [];
@@ -111,22 +146,10 @@ export async function verifyVault(adapter) {
   }
 
   for (const descriptor of CRITICAL_DATA_FILES) {
-    const inspection = await inspectJsonFile(adapter, descriptor.path, descriptor.validator);
-    if (!inspection.main.valid) {
-      issues.push({
-        path: descriptor.path,
-        type: inspection.main.exists ? 'invalid-file' : 'missing-file',
-        message: inspection.main.error ?? `Required file is missing: ${descriptor.path}`,
-        recoverable: inspection.recoverable,
-        recoveryPath: inspection.recoverable ? inspection.recovery.path : null
-      });
-    } else if (inspection.recovery.exists && !inspection.recovery.valid) {
-      warnings.push({
-        path: inspection.recovery.path,
-        type: 'invalid-recovery-snapshot',
-        message: inspection.recovery.error
-      });
-    }
+    addInspectionIssue(issues, warnings, descriptor, await inspectJsonFile(adapter, descriptor.path, descriptor.validator));
+  }
+  for (const descriptor of OPTIONAL_DATA_FILES) {
+    addInspectionIssue(issues, warnings, descriptor, await inspectJsonFile(adapter, descriptor.path, descriptor.validator), { optional: true });
   }
 
   const recoverableCount = issues.filter((issue) => issue.recoverable).length;
@@ -145,9 +168,10 @@ export async function repairVault(adapter) {
   const before = await verifyVault(adapter);
   const repaired = [];
   const failed = [];
+  const descriptors = [...CRITICAL_DATA_FILES, ...OPTIONAL_DATA_FILES];
 
   for (const issue of before.issues.filter((item) => item.recoverable)) {
-    const descriptor = CRITICAL_DATA_FILES.find((item) => item.path === issue.path);
+    const descriptor = descriptors.find((item) => item.path === issue.path);
     if (!descriptor) continue;
     try {
       repaired.push(await restoreLastKnownGood(adapter, descriptor.path, descriptor.validator));

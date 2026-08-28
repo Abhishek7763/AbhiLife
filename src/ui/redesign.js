@@ -1,7 +1,7 @@
 import './redesign.css';
 import { APP_VERSION } from '../core/system.js';
 
-const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more', 'habits'];
+const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more', 'habits', 'bad-habits'];
 const GOAL_STAGES = {
   investigate: 'goal-investigation-card',
   define: 'goal-definition-card',
@@ -50,7 +50,8 @@ function screenHeader({ eyebrow, title, copy }) {
 function buildMoreMenu() {
   return `
     <section class="calm-menu" aria-label="More tools">
-      <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="habits"><div><strong>Habits</strong><span>Cue, context and repetition</span></div><span class="menu-state">Open</span></button>
+      <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="habits"><div><strong>Habits</strong><span>Build useful behavior with cue and context</span></div><span class="menu-state">Open</span></button>
+      <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="bad-habits"><div><strong>Bad Habits</strong><span>Understand triggers, friction and replacements</span></div><span class="menu-state">Open</span></button>
       <div class="calm-menu-row"><div><strong>Maintenance</strong><span>Protect everyday stability</span></div><span class="menu-state">Later</span></div>
       <div class="calm-menu-row"><div><strong>Reviews</strong><span>Weekly and monthly reflection</span></div><span class="menu-state">Later</span></div>
       <div class="calm-menu-row"><div><strong>History</strong><span>Your 365-day evidence timeline</span></div><span class="menu-state">Later</span></div>
@@ -72,29 +73,17 @@ function buildScreens(shell) {
   workspace.className = 'app-workspace';
   workspace.innerHTML = `
     <section class="app-screen" id="screen-today" data-screen="today">
-      ${screenHeader({
-        eyebrow: greeting(),
-        title: 'Today',
-        copy: localDayLabel()
-      })}
+      ${screenHeader({ eyebrow: greeting(), title: 'Today', copy: localDayLabel() })}
       <div class="screen-stack" id="today-screen-content"></div>
     </section>
 
     <section class="app-screen" id="screen-inbox" data-screen="inbox" hidden>
-      ${screenHeader({
-        eyebrow: 'Life Inbox',
-        title: 'Capture first.',
-        copy: 'Write it down without deciding what it means yet.'
-      })}
+      ${screenHeader({ eyebrow: 'Life Inbox', title: 'Capture first.', copy: 'Write it down without deciding what it means yet.' })}
       <div class="screen-stack" id="inbox-screen-content"></div>
     </section>
 
     <section class="app-screen" id="screen-goals" data-screen="goals" hidden>
-      ${screenHeader({
-        eyebrow: 'Goals',
-        title: 'Think clearly. Act deliberately.',
-        copy: 'Investigate, define, plan and activate only what matters.'
-      })}
+      ${screenHeader({ eyebrow: 'Goals', title: 'Think clearly. Act deliberately.', copy: 'Investigate, define, plan and activate only what matters.' })}
       <div class="segment-tabs goal-stage-tabs" role="tablist" aria-label="Goal workflow">
         <button type="button" class="segment-tab active" data-goal-stage="investigate">Investigate</button>
         <button type="button" class="segment-tab" data-goal-stage="define">Define</button>
@@ -105,24 +94,20 @@ function buildScreens(shell) {
     </section>
 
     <section class="app-screen" id="screen-more" data-screen="more" hidden>
-      ${screenHeader({
-        eyebrow: 'System',
-        title: 'More',
-        copy: 'Long-term tools and your local data controls.'
-      })}
-      <div class="screen-stack" id="more-screen-content">
-        ${buildMoreMenu()}
-      </div>
+      ${screenHeader({ eyebrow: 'System', title: 'More', copy: 'Long-term tools and your local data controls.' })}
+      <div class="screen-stack" id="more-screen-content">${buildMoreMenu()}</div>
     </section>
 
     <section class="app-screen" id="screen-habits" data-screen="habits" hidden>
       <button type="button" class="subscreen-back" data-open-screen="more">← More</button>
-      ${screenHeader({
-        eyebrow: 'Behavior',
-        title: 'Habits',
-        copy: 'Make useful behavior easier to repeat. Keep the minimum version small.'
-      })}
+      ${screenHeader({ eyebrow: 'Behavior', title: 'Habits', copy: 'Make useful behavior easier to repeat. Keep the minimum version small.' })}
       <div class="screen-stack" id="habits-screen-content"></div>
+    </section>
+
+    <section class="app-screen" id="screen-bad-habits" data-screen="bad-habits" hidden>
+      <button type="button" class="subscreen-back" data-open-screen="more">← More</button>
+      ${screenHeader({ eyebrow: 'Behavior', title: 'Bad Habits', copy: 'Observe the loop without shame, then change cues, friction, environment and replacement behavior.' })}
+      <div class="screen-stack" id="bad-habits-screen-content"></div>
     </section>
   `;
 
@@ -204,7 +189,7 @@ function showScreen(name) {
   document.querySelectorAll('.app-screen').forEach((screen) => {
     screen.hidden = screen.dataset.screen !== name;
   });
-  const dockScreen = name === 'habits' ? 'more' : name;
+  const dockScreen = ['habits', 'bad-habits'].includes(name) ? 'more' : name;
   document.querySelectorAll('.bottom-nav .nav-item').forEach((button) => {
     const active = button.dataset.screen === dockScreen;
     button.classList.toggle('active', active);
