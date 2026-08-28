@@ -7,6 +7,21 @@ import { DATA_PATHS, recordPath } from '../storage/paths.js';
 import { safeWriteJson } from '../storage/recovery.js';
 
 export const TODAY_TASK_STATES = Object.freeze(['planned', ...EXECUTION_STATES]);
+export const DAY_RESCUE_STATES = Object.freeze(['active', 'completed']);
+export const DAY_RESCUE_PREP_STATES = Object.freeze(['planned', 'done', 'skipped']);
+
+export const MISSED_REASON_GUIDANCE = Object.freeze({
+  forgot: 'Attach the action to a visible cue or trigger next time.',
+  no_time: 'Reduce the scope or reserve a smaller time block next time.',
+  low_energy: 'Move it to a higher-energy time or use a smaller version.',
+  too_difficult: 'Break it into an easier first physical step.',
+  too_large: 'Split it. The next action was too large for one attempt.',
+  unclear: 'Rewrite the next physical action before retrying.',
+  distraction: 'Reduce the distraction cue or add friction before the next attempt.',
+  unexpected_work: 'Replan capacity. Treat the interruption as data, not failure.',
+  not_important_now: 'Reconsider whether the goal still deserves active focus.',
+  other: 'Add a short note so this pattern can be reviewed later.'
+});
 
 function nowISO() {
   return new Date().toISOString();
@@ -26,11 +41,25 @@ function requireOptionalString(value, label) {
   if (value !== null && value !== undefined) requireString(value, label);
 }
 
+function requireStringArray(value, label) {
+  if (!Array.isArray(value)) throw new Error(`Invalid AbhiLife data: ${label} must be an array.`);
+  const seen = new Set();
+  for (const item of value) {
+    requireString(item, `${label} item`);
+    if (seen.has(item)) throw new Error(`Invalid AbhiLife data: ${label} contains duplicate id ${item}.`);
+    seen.add(item);
+  }
+}
+
 export function localDateISO(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+export function getMissedReasonGuidance(reason) {
+  return MISSED_REASON_GUIDANCE[reason] ?? '';
 }
 
 export function validateTodayTaskEvent(event) {
@@ -65,6 +94,51 @@ export function validateTodayTaskEvent(event) {
   return true;
 }
 
+export function validateDayRescuePlan(plan, record) {
+  if (!plan || typeof plan !== 'object' || Array.isArray(plan)) {
+    throw new Error('Invalid AbhiLife data: day rescue plan must be an object.');
+  }
+  requireString(plan.id, 'day rescue plan id');
+  if (!DAY_RESCUE_STATES.includes(plan.status)) {
+    throw new Error(`Invalid AbhiLife data: unknown day rescue status ${String(plan.status)}.`);
+  }
+  requireStringArray(plan.selectedTaskIds, 'day rescue selectedTaskIds');
+  requireStringArray(plan.releasedTaskIds, 'day rescue releasedTaskIds');
+  if (!plan.selectedTaskIds.length) {
+    throw new Error('Invalid AbhiLife data: day rescue requires at least one selected task.');
+  }
+  const allIds = new Set(record.taskEvents.map((event) => event.id));
+  const selected = new Set(plan.selectedTaskIds);
+  for (const id of plan.selectedTaskIds) {
+    if (!allIds.has(id)) throw new Error(`Invalid AbhiLife data: day rescue selected task ${id} is missing.`);
+  }
+  for (const id of plan.releasedTaskIds) {
+    if (!allIds.has(id)) throw new Error(`Invalid AbhiLife data: day rescue released task ${id} is missing.`);
+    if (selected.has(id)) throw new Error(`Invalid AbhiLife data: day rescue task ${id} cannot be selected and released.`);
+  }
+  if (!Number.isInteger(plan.pendingCountBeforeRescue) || plan.pendingCountBeforeRescue < plan.selectedTaskIds.length) {
+    throw new Error('Invalid AbhiLife data: day rescue pendingCountBeforeRescue is invalid.');
+  }
+  if (!plan.preparation || typeof plan.preparation !== 'object' || Array.isArray(plan.preparation)) {
+    throw new Error('Invalid AbhiLife data: day rescue preparation must be an object.');
+  }
+  requireString(plan.preparation.title, 'day rescue preparation title');
+  if (!Number.isInteger(plan.preparation.durationMinutes) || plan.preparation.durationMinutes <= 0) {
+    throw new Error('Invalid AbhiLife data: day rescue preparation durationMinutes must be positive.');
+  }
+  if (!DAY_RESCUE_PREP_STATES.includes(plan.preparation.state)) {
+    throw new Error(`Invalid AbhiLife data: unknown day rescue preparation state ${String(plan.preparation.state)}.`);
+  }
+  requireString(plan.preparation.updatedAt, 'day rescue preparation updatedAt');
+  requireString(plan.createdAt, 'day rescue createdAt');
+  requireString(plan.updatedAt, 'day rescue updatedAt');
+  requireOptionalString(plan.completedAt, 'day rescue completedAt');
+  if (plan.status === 'completed' && !plan.completedAt) {
+    throw new Error('Invalid AbhiLife data: completed day rescue requires completedAt.');
+  }
+  return true;
+}
+
 export function validateTodayRecord(record) {
   validateDailyRecord(record);
   const ids = new Set();
@@ -83,6 +157,7 @@ export function validateTodayRecord(record) {
       throw new Error('Invalid AbhiLife data: importantWinTaskId must reference a task event in this daily record.');
     }
   }
+  if (record.rescuePlan !== null && record.rescuePlan !== undefined) validateDayRescuePlan(record.rescuePlan, record);
   requireString(record.createdAt, 'daily record createdAt');
   requireString(record.updatedAt, 'daily record updatedAt');
   return true;
@@ -112,6 +187,102 @@ function findGoal(goals, goalId) {
   return goal;
 }
 
+function pendingTasks(record) {
+  return record.taskEvents.filter((event) => event.state === 'planned');
+}
+
+function shortestFirst(items) {
+  return [...items].sort((a, b) => a.durationMinutes - b.durationMinutes || a.createdAt.localeCompare(b.createdAt));
+}
+
+export function chooseDayRescueTasks(record) {
+  const pending = pendingTasks(record);
+  if (!pending.length) return [];
+
+  const selected = [];
+  const important = pending.find((event) => event.id === record.importantWinTaskId);
+  if (important) selected.push(important);
+  else selected.push(shortestFirst(pending)[0]);
+
+  const remaining = shortestFirst(pending.filter((event) => event.id !== selected[0].id));
+  if (remaining.length) selected.push(remaining[0]);
+  return selected;
+}
+
+function maybeCompleteDayRescue(record, at = nowISO()) {
+  const plan = record.rescuePlan;
+  if (!plan || plan.status !== 'active') return false;
+  const selectedResolved = plan.selectedTaskIds.every((id) => {
+    const event = record.taskEvents.find((item) => item.id === id);
+    return event && event.state !== 'planned';
+  });
+  const prepResolved = plan.preparation.state !== 'planned';
+  if (!selectedResolved || !prepResolved) return false;
+  plan.status = 'completed';
+  plan.completedAt = at;
+  plan.updatedAt = at;
+  return true;
+}
+
+export async function createDayRescuePlan(adapter, dateISO = localDateISO()) {
+  const record = await loadTodayRecord(adapter, dateISO);
+  if (record.rescuePlan) return { record, plan: record.rescuePlan, created: false };
+
+  const pending = pendingTasks(record);
+  if (!pending.length) throw new Error('There are no pending Today actions to rescue.');
+
+  const selected = chooseDayRescueTasks(record);
+  const selectedIds = selected.map((event) => event.id);
+  const selectedSet = new Set(selectedIds);
+  const released = pending.filter((event) => !selectedSet.has(event.id));
+  const now = nowISO();
+
+  for (const event of released) {
+    event.state = 'skipped';
+    event.reason = null;
+    event.note = 'Released from the remaining day by Day Rescue. Intentional release is not failure.';
+    event.updatedAt = now;
+    event.resolvedAt = now;
+  }
+
+  record.importantWinTaskId = selectedIds[0];
+  record.rescuePlan = {
+    id: makeId('rescue'),
+    status: 'active',
+    selectedTaskIds: selectedIds,
+    releasedTaskIds: released.map((event) => event.id),
+    pendingCountBeforeRescue: pending.length,
+    preparation: {
+      title: 'Prepare tomorrow',
+      durationMinutes: 5,
+      state: 'planned',
+      updatedAt: now
+    },
+    createdAt: now,
+    updatedAt: now,
+    completedAt: null
+  };
+
+  await saveTodayRecord(adapter, record);
+  return { record, plan: record.rescuePlan, created: true };
+}
+
+export async function setDayRescuePreparationState(adapter, dateISO, state) {
+  if (!['done', 'skipped'].includes(state)) throw new Error('Choose Done or Skip for tomorrow preparation.');
+  const record = await loadTodayRecord(adapter, dateISO);
+  const plan = record.rescuePlan;
+  if (!plan) throw new Error('Day Rescue has not been started.');
+  if (plan.status === 'completed') return { record, plan, changed: false };
+
+  const now = nowISO();
+  plan.preparation.state = state;
+  plan.preparation.updatedAt = now;
+  plan.updatedAt = now;
+  maybeCompleteDayRescue(record, now);
+  await saveTodayRecord(adapter, record);
+  return { record, plan, changed: true };
+}
+
 export async function listActivationCandidates(adapter) {
   const goals = await loadGoals(adapter);
   const result = [];
@@ -137,7 +308,11 @@ export async function ensureGoalNextActionOnDate(adapter, goalId, dateISO = loca
   const record = await loadTodayRecord(adapter, dateISO);
 
   const existing = record.taskEvents.find((event) => event.goalId === goal.id && event.sourcePlanTaskId === sourceTask.id);
-  if (existing) return { record, event: existing, created: false };
+  if (existing) return { record, event: existing, created: false, deferredByRescue: false };
+
+  if (record.rescuePlan) {
+    return { record, event: null, created: false, deferredByRescue: true };
+  }
 
   const now = nowISO();
   const event = {
@@ -158,7 +333,7 @@ export async function ensureGoalNextActionOnDate(adapter, goalId, dateISO = loca
   record.taskEvents.push(event);
   if (!record.importantWinTaskId) record.importantWinTaskId = event.id;
   await saveTodayRecord(adapter, record);
-  return { record, event, created: true };
+  return { record, event, created: true, deferredByRescue: false };
 }
 
 export async function activateGoal(adapter, goalId, dateISO = localDateISO()) {
@@ -202,6 +377,7 @@ export async function recordTaskOutcome(adapter, dateISO, eventId, state, { reas
   event.note = String(note ?? '').trim() || null;
   event.updatedAt = now;
   event.resolvedAt = now;
+  maybeCompleteDayRescue(record, now);
   await saveTodayRecord(adapter, record);
   return { record, event };
 }

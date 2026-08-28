@@ -190,6 +190,7 @@ export function createDailyRecord(dateISO) {
     taskEvents: [],
     habitEvents: [],
     maintenanceEvents: [],
+    rescuePlan: null,
     notes: '',
     dayReview: null,
     createdAt: nowISO(),
