@@ -1,7 +1,7 @@
 import './redesign.css';
 import { APP_VERSION } from '../core/system.js';
 
-const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more', 'habits', 'bad-habits'];
+const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more', 'habits', 'bad-habits', 'maintenance'];
 const GOAL_STAGES = {
   investigate: 'goal-investigation-card',
   define: 'goal-definition-card',
@@ -52,7 +52,7 @@ function buildMoreMenu() {
     <section class="calm-menu" aria-label="More tools">
       <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="habits"><div><strong>Habits</strong><span>Build useful behavior with cue and context</span></div><span class="menu-state">Open</span></button>
       <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="bad-habits"><div><strong>Bad Habits</strong><span>Understand triggers, friction and replacements</span></div><span class="menu-state">Open</span></button>
-      <div class="calm-menu-row"><div><strong>Maintenance</strong><span>Protect everyday stability</span></div><span class="menu-state">Later</span></div>
+      <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="maintenance"><div><strong>Maintenance</strong><span>Protect everyday stability</span></div><span class="menu-state">Open</span></button>
       <div class="calm-menu-row"><div><strong>Reviews</strong><span>Weekly and monthly reflection</span></div><span class="menu-state">Later</span></div>
       <div class="calm-menu-row"><div><strong>History</strong><span>Your 365-day evidence timeline</span></div><span class="menu-state">Later</span></div>
       <div class="calm-menu-row"><div><strong>Notes</strong><span>Ideas, lessons and reflections</span></div><span class="menu-state">Later</span></div>
@@ -108,6 +108,12 @@ function buildScreens(shell) {
       <button type="button" class="subscreen-back" data-open-screen="more">← More</button>
       ${screenHeader({ eyebrow: 'Behavior', title: 'Bad Habits', copy: 'Observe the loop without shame, then change cues, friction, environment and replacement behavior.' })}
       <div class="screen-stack" id="bad-habits-screen-content"></div>
+    </section>
+
+    <section class="app-screen" id="screen-maintenance" data-screen="maintenance" hidden>
+      <button type="button" class="subscreen-back" data-open-screen="more">← More</button>
+      ${screenHeader({ eyebrow: 'Stability', title: 'Maintenance', copy: 'Protect basic functioning without turning normal care into a growth score.' })}
+      <div class="screen-stack" id="maintenance-screen-content"></div>
     </section>
   `;
 
@@ -189,7 +195,7 @@ function showScreen(name) {
   document.querySelectorAll('.app-screen').forEach((screen) => {
     screen.hidden = screen.dataset.screen !== name;
   });
-  const dockScreen = ['habits', 'bad-habits'].includes(name) ? 'more' : name;
+  const dockScreen = ['habits', 'bad-habits', 'maintenance'].includes(name) ? 'more' : name;
   document.querySelectorAll('.bottom-nav .nav-item').forEach((button) => {
     const active = button.dataset.screen === dockScreen;
     button.classList.toggle('active', active);

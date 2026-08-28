@@ -11,6 +11,7 @@ import {
   validateSettings
 } from '../data/validate.js';
 import { BAD_HABITS_PATH, validateBadHabitsCollection } from '../bad-habits/bad-habits.js';
+import { validateMaintenanceCollection } from '../maintenance/maintenance.js';
 import { DATA_PATHS, REQUIRED_DIRECTORIES } from './paths.js';
 import {
   inspectJsonFile,
@@ -28,7 +29,7 @@ export const CRITICAL_DATA_FILES = Object.freeze([
   Object.freeze({ path: DATA_PATHS.departments, validator: collectionValidator('departments') }),
   Object.freeze({ path: DATA_PATHS.goals, validator: collectionValidator('goals') }),
   Object.freeze({ path: DATA_PATHS.habits, validator: collectionValidator('habits') }),
-  Object.freeze({ path: DATA_PATHS.maintenance, validator: collectionValidator('maintenance') })
+  Object.freeze({ path: DATA_PATHS.maintenance, validator: validateMaintenanceCollection })
 ]);
 
 export const OPTIONAL_DATA_FILES = Object.freeze([
@@ -43,7 +44,7 @@ function initialData() {
     [DATA_PATHS.departments, createDefaultDepartments(), collectionValidator('departments')],
     [DATA_PATHS.goals, createCollection('goals'), collectionValidator('goals')],
     [DATA_PATHS.habits, createCollection('habits'), collectionValidator('habits')],
-    [DATA_PATHS.maintenance, createCollection('maintenance'), collectionValidator('maintenance')]
+    [DATA_PATHS.maintenance, createCollection('maintenance'), validateMaintenanceCollection]
   ];
 }
 
@@ -128,20 +129,10 @@ export async function verifyVault(adapter) {
   for (const directory of REQUIRED_DIRECTORIES) {
     try {
       if (!await adapter.exists(directory)) {
-        issues.push({
-          path: directory,
-          type: 'missing-directory',
-          message: `Required directory is missing: ${directory}`,
-          recoverable: false
-        });
+        issues.push({ path: directory, type: 'missing-directory', message: `Required directory is missing: ${directory}`, recoverable: false });
       }
     } catch (error) {
-      issues.push({
-        path: directory,
-        type: 'directory-check-failed',
-        message: error.message,
-        recoverable: false
-      });
+      issues.push({ path: directory, type: 'directory-check-failed', message: error.message, recoverable: false });
     }
   }
 
@@ -155,9 +146,7 @@ export async function verifyVault(adapter) {
   const recoverableCount = issues.filter((issue) => issue.recoverable).length;
   return {
     healthy: issues.length === 0,
-    status: issues.length === 0
-      ? 'healthy'
-      : recoverableCount === issues.length ? 'recoverable' : 'critical',
+    status: issues.length === 0 ? 'healthy' : recoverableCount === issues.length ? 'recoverable' : 'critical',
     issues,
     warnings,
     recoverableCount
@@ -185,19 +174,10 @@ export async function repairVault(adapter) {
 }
 
 export async function diagnoseVaultConnection(adapter) {
-  if (!adapter?.getRootStatus) {
-    throw new Error('Storage adapter does not expose root diagnostics.');
-  }
-
+  if (!adapter?.getRootStatus) throw new Error('Storage adapter does not expose root diagnostics.');
   const root = await adapter.getRootStatus();
-  if (!root.connected) {
-    return { connected: false, initialized: false, root, health: null };
-  }
-
+  if (!root.connected) return { connected: false, initialized: false, root, health: null };
   const initialized = await adapter.exists(DATA_PATHS.manifest);
-  if (!initialized) {
-    return { connected: true, initialized: false, root, health: null };
-  }
-
+  if (!initialized) return { connected: true, initialized: false, root, health: null };
   return { connected: true, initialized: true, root, health: await verifyVault(adapter) };
 }

@@ -15,7 +15,7 @@ AbhiLife is a private, offline-first personal improvement system built for one u
 - Cloud database: none by default
 - GitHub: application source code only; never personal life data
 
-## Current status — v0.14.0 Bad Habit Engine
+## Current status — v0.15.0 Maintenance Engine
 
 The current stable direction includes:
 
@@ -28,16 +28,18 @@ The current stable direction includes:
 - positive Habit Engine under `More → Habits`
 - positive habits with cue, context, Minimum Version, Preferred Version and weekday recurrence
 - separate Bad Habit Engine under `More → Bad Habits`
-- unwanted behavior definitions with Trigger, Time Pattern, Place/Context, Immediate Reward and Long-term Cost
-- intervention planning through Remove Cue, Increase Friction, Environment Change and Replacement Behavior
-- Bad Habit states: Active / Paused / Archived with restoration and no definition/history deletion
-- multiple same-day behavior evidence events: Occurred / Interrupted / Replaced
-- zero logged events are not automatically interpreted as success
-- no streak, shame score or gamified life score
-- task, positive-habit and bad-habit evidence coexist in `records/YYYY/MM/DD.json`
-- backward-compatible reading of older daily records that do not yet contain `badHabitEvents`
-- bad-habit definitions live separately at `habits/bad-items.json`
-- optional bad-habit data participates in validated recovery snapshots and vault repair once it exists
+- unwanted behavior analysis through trigger/context, reward/cost, friction, environment and replacement behavior
+- separate Maintenance Engine under `More → Maintenance`
+- maintenance categories for sleep, health routines, hygiene, meals, medication routine, basic finance, home and other protective systems
+- maintenance definitions with purpose, Minimum Acceptable Condition and selectable weekday schedule
+- Maintenance states: Active / Paused / Archived with restoration and no history deletion
+- scheduled maintenance creates one daily evidence event per item/date without duplicates
+- Maintenance results: Done / Partial / Missed / Intentionally Skipped
+- missed-maintenance reason capture reuses deterministic adjustment guidance
+- medication entries are user-authored routine tracking only; AbhiLife does not recommend medicines, doses or treatment
+- no streak, growth points, shame score or gamified life score
+- task, positive-habit, bad-habit and maintenance evidence coexist in `records/YYYY/MM/DD.json`
+- maintenance definitions remain in the existing recovery-protected `maintenance/items.json`
 - Android SAF native storage bridge and persistent folder reconnection
 - atomic-style writes, read-back validation, rollback and `.recovery/` snapshots
 - web preview that never becomes the personal-data master
@@ -46,7 +48,7 @@ The current stable direction includes:
 
 ## Core behavior rule
 
-AbhiLife does not calculate a life score and does not turn one miss or one unwanted-behavior occurrence into a failed day or identity verdict. Evidence is used to improve the system. Positive habits and unwanted habits remain distinct: positive habits are repeated intentionally; unwanted habits are analyzed through triggers, context, immediate reward, friction, environment and replacement behavior.
+AbhiLife does not calculate a life score and does not turn one miss into a failed day or identity verdict. Goals, positive habits, unwanted habits and maintenance remain distinct models. Maintenance protects normal functioning; it is not treated as growth or achievement points.
 
 ## Development
 
