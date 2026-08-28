@@ -308,7 +308,11 @@ export async function ensureGoalNextActionOnDate(adapter, goalId, dateISO = loca
   const record = await loadTodayRecord(adapter, dateISO);
 
   const existing = record.taskEvents.find((event) => event.goalId === goal.id && event.sourcePlanTaskId === sourceTask.id);
-  if (existing) return { record, event: existing, created: false };
+  if (existing) return { record, event: existing, created: false, deferredByRescue: false };
+
+  if (record.rescuePlan) {
+    return { record, event: null, created: false, deferredByRescue: true };
+  }
 
   const now = nowISO();
   const event = {
@@ -329,7 +333,7 @@ export async function ensureGoalNextActionOnDate(adapter, goalId, dateISO = loca
   record.taskEvents.push(event);
   if (!record.importantWinTaskId) record.importantWinTaskId = event.id;
   await saveTodayRecord(adapter, record);
-  return { record, event, created: true };
+  return { record, event, created: true, deferredByRescue: false };
 }
 
 export async function activateGoal(adapter, goalId, dateISO = localDateISO()) {
