@@ -127,9 +127,13 @@ async function onClick(event) {
   button.disabled = true;
   try {
     const result = await activateGoal(nativeStorageBridge, button.dataset.goalId, localDateISO());
-    setOverview(result.created
-      ? 'Goal is active. Its Next Action is now in Today.'
-      : 'Goal is active and Today already contains this Next Action.', 'good');
+    if (result.deferredByRescue) {
+      setOverview('Goal is active. Today is already locked by Day Rescue, so this Next Action is deferred from today and can enter a fresh day automatically.', 'good');
+    } else {
+      setOverview(result.created
+        ? 'Goal is active. Its Next Action is now in Today.'
+        : 'Goal is active and Today already contains this Next Action.', 'good');
+    }
     window.dispatchEvent(new CustomEvent('abhilife:today-changed'));
     await refresh();
   } catch (error) {
