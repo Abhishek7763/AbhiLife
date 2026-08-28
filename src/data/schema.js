@@ -193,6 +193,7 @@ export function createDailyRecord(dateISO) {
     importantWinTaskId: null,
     taskEvents: [],
     habitEvents: [],
+    badHabitEvents: [],
     maintenanceEvents: [],
     rescuePlan: null,
     notes: '',
