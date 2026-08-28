@@ -1,7 +1,7 @@
 import './redesign.css';
 import { APP_VERSION } from '../core/system.js';
 
-const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more'];
+const SCREEN_ORDER = ['today', 'inbox', 'goals', 'more', 'habits'];
 const GOAL_STAGES = {
   investigate: 'goal-investigation-card',
   define: 'goal-definition-card',
@@ -50,7 +50,7 @@ function screenHeader({ eyebrow, title, copy }) {
 function buildMoreMenu() {
   return `
     <section class="calm-menu" aria-label="More tools">
-      <div class="calm-menu-row"><div><strong>Habits</strong><span>Cue, context and repetition</span></div><span class="menu-state">Later</span></div>
+      <button type="button" class="calm-menu-row calm-menu-action" data-open-screen="habits"><div><strong>Habits</strong><span>Cue, context and repetition</span></div><span class="menu-state">Open</span></button>
       <div class="calm-menu-row"><div><strong>Maintenance</strong><span>Protect everyday stability</span></div><span class="menu-state">Later</span></div>
       <div class="calm-menu-row"><div><strong>Reviews</strong><span>Weekly and monthly reflection</span></div><span class="menu-state">Later</span></div>
       <div class="calm-menu-row"><div><strong>History</strong><span>Your 365-day evidence timeline</span></div><span class="menu-state">Later</span></div>
@@ -114,10 +114,25 @@ function buildScreens(shell) {
         ${buildMoreMenu()}
       </div>
     </section>
+
+    <section class="app-screen" id="screen-habits" data-screen="habits" hidden>
+      <button type="button" class="subscreen-back" data-open-screen="more">← More</button>
+      ${screenHeader({
+        eyebrow: 'Behavior',
+        title: 'Habits',
+        copy: 'Make useful behavior easier to repeat. Keep the minimum version small.'
+      })}
+      <div class="screen-stack" id="habits-screen-content"></div>
+    </section>
   `;
 
   if (topbar) topbar.insertAdjacentElement('afterend', workspace);
   else shell.prepend(workspace);
+
+  workspace.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-open-screen]');
+    if (button) showScreen(button.dataset.openScreen);
+  });
 
   if (todayCard) {
     todayCard.classList.add('calm-section', 'today-panel');
@@ -189,12 +204,14 @@ function showScreen(name) {
   document.querySelectorAll('.app-screen').forEach((screen) => {
     screen.hidden = screen.dataset.screen !== name;
   });
+  const dockScreen = name === 'habits' ? 'more' : name;
   document.querySelectorAll('.bottom-nav .nav-item').forEach((button) => {
-    const active = button.dataset.screen === name;
+    const active = button.dataset.screen === dockScreen;
     button.classList.toggle('active', active);
     button.setAttribute('aria-current', active ? 'page' : 'false');
   });
   document.documentElement.dataset.screen = name;
+  window.dispatchEvent(new CustomEvent('abhilife:screen-changed', { detail: { screen: name } }));
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
