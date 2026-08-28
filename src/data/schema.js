@@ -177,6 +177,10 @@ export function createHabit({ title, areaId = null, kind = 'build' } = {}) {
     minimumAction: '',
     targetAction: '',
     replacementBehavior: '',
+    schedule: { type: 'days_of_week', days: [0, 1, 2, 3, 4, 5, 6] },
+    pausedAt: null,
+    archivedAt: null,
+    preArchiveState: null,
     createdAt: now,
     updatedAt: now
   };
